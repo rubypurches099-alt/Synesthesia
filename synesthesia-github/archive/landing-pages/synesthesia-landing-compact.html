@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synesthesia - MIDI Visualizer Collection</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'VT323', monospace;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at top, rgba(58, 134, 255, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom, rgba(131, 56, 236, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px 20px 40px;
+            position: relative;
+        }
+        
+        .hero-content {
+            max-width: 900px;
+            margin-bottom: 15px;
+        }
+        
+        .title-container {
+            margin-bottom: 15px;
+        }
+        
+        .title-wave {
+            margin-bottom: 0px;
+        }
+        
+        .title-wave canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #888;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+        
+        .hero-description {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 15px auto 25px;
+        }
+        
+        /* Main Visual - Circular Rainbow */
+        .main-visual {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .rainbow-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Navigation Grid - Centered over visual */
+        .nav-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .nav-card {
+            background: rgba(10, 10, 20, 0.95);
+            border: 2px solid rgba(58, 134, 255, 0.4);
+            border-radius: 12px;
+            padding: 12px 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            min-width: 100px;
+        }
+        
+        .nav-card:hover {
+            transform: scale(1.05);
+            border-color: rgba(58, 134, 255, 0.8);
+            background: rgba(20, 20, 40, 0.98);
+            box-shadow: 0 10px 40px rgba(58, 134, 255, 0.4);
+        }
+        
+        .nav-card h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            bottom: 100px;
+            right: 50px;
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            border-radius: 10px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .theme-toggle:hover {
+            border-color: rgba(58, 134, 255, 0.6);
+            background: rgba(30, 30, 50, 0.9);
+        }
+        
+        /* Sketches Gallery */
+        .sketches-section {
+            padding: 80px 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(20, 20, 30, 0.3) 50%, transparent 100%);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 50px;
+            background: linear-gradient(135deg, #3a86ff, #8338ec);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sketches-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+        
+        .sketch-card {
+            background: rgba(20, 20, 30, 0.6);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .sketch-card:hover {
+            border-color: rgba(58, 134, 255, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(58, 134, 255, 0.2);
+        }
+        
+        .sketch-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .sketch-card h4 {
+            font-size: 18px;
+            color: #3a86ff;
+            margin-bottom: 8px;
+        }
+        
+        .sketch-card p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+        
+        /* Visualizers Gallery */
+        .visualizers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .visualizer-card {
+            background: rgba(20, 20, 30, 0.6);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .visualizer-card:hover {
+            border-color: rgba(58, 134, 255, 0.5);
+            transform: translateY(-5px);
+        }
+        
+        .visualizer-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .visualizer-card h5 {
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+            padding: 40px 20px 80px;
+            min-height: 100vh;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(58, 134, 255, 0.3);
+        }
+        
+        .back-btn {
+            background: rgba(58, 134, 255, 0.2);
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 20px;
+            border: none;
+        }
+        
+        .back-btn:hover {
+            background: rgba(58, 134, 255, 0.3);
+        }
+        
+        .section-header h2 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #3a86ff;
+        }
+        
+        /* Version Cards */
+        .versions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .version-card {
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .version-card:hover {
+            border-color: rgba(58, 134, 255, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(58, 134, 255, 0.2);
+        }
+        
+        .version-card h4 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #3a86ff;
+        }
+        
+        .version-card p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .version-badge {
+            display: inline-block;
+            background: rgba(58, 134, 255, 0.2);
+            color: #3a86ff;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .launch-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #3a86ff, #8338ec);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .launch-btn:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(58, 134, 255, 0.4);
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            background: rgba(20, 20, 30, 0.6);
+            border-left: 4px solid #3a86ff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .info-box h4 {
+            color: #3a86ff;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .info-box p, .info-box ul {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .info-box li {
+            margin-bottom: 8px;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(58, 134, 255, 0.3);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 30px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -47px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: #3a86ff;
+            border-radius: 50%;
+            border: 3px solid #000;
+        }
+        
+        .timeline-date {
+            color: #3a86ff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-content {
+            background: rgba(20, 20, 30, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .timeline-content h4 {
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .timeline-content p {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 30px;
+            border-top: 1px solid rgba(58, 134, 255, 0.2);
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* Font Selector Toolbar */
+        .font-toolbar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(20, 20, 30, 0.95);
+            border: 2px solid rgba(58, 134, 255, 0.4);
+            border-radius: 15px;
+            padding: 15px 20px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .font-toolbar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(58, 134, 255, 0.3);
+        }
+        
+        .font-size-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .font-size-label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .font-size-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .font-size-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(58, 134, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        .font-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3a86ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .font-size-slider::-webkit-slider-thumb:hover {
+            background: #5a9fff;
+            transform: scale(1.2);
+        }
+        
+        .font-size-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3a86ff;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .font-size-slider::-moz-range-thumb:hover {
+            background: #5a9fff;
+            transform: scale(1.2);
+        }
+        
+        .font-size-value {
+            font-size: 13px;
+            color: #3a86ff;
+            font-weight: 600;
+            min-width: 45px;
+            text-align: right;
+        }
+        
+        .font-size-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: space-between;
+        }
+        
+        .font-size-btn {
+            flex: 1;
+            background: rgba(30, 30, 50, 0.6);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 11px;
+            color: #aaa;
+            font-weight: 600;
+        }
+        
+        .font-size-btn:hover {
+            border-color: rgba(58, 134, 255, 0.5);
+            background: rgba(40, 40, 60, 0.8);
+            color: #fff;
+        }
+        
+        .font-size-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .font-toolbar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(58, 134, 255, 0.3);
+        }
+        
+        .font-toolbar-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #3a86ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .font-toolbar-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .font-toolbar-toggle:hover {
+            color: #3a86ff;
+            transform: scale(1.2);
+        }
+        
+        .font-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .font-options.collapsed {
+            display: none;
+        }
+        
+        .font-option {
+            background: rgba(30, 30, 50, 0.6);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            color: #aaa;
+            text-align: left;
+            white-space: nowrap;
+        }
+        
+        .font-option:hover {
+            border-color: rgba(58, 134, 255, 0.5);
+            background: rgba(40, 40, 60, 0.8);
+            color: #fff;
+        }
+        
+        .font-option.active {
+            border-color: #3a86ff;
+            background: rgba(58, 134, 255, 0.2);
+            color: #3a86ff;
+            font-weight: 600;
+        }
+        
+        .font-preview {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+        
+        /* Scrollbar styling for font options */
+        .font-options::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .font-options::-webkit-scrollbar-track {
+            background: rgba(20, 20, 30, 0.5);
+            border-radius: 3px;
+        }
+        
+        .font-options::-webkit-scrollbar-thumb {
+            background: rgba(58, 134, 255, 0.5);
+            border-radius: 3px;
+        }
+        
+        .font-options::-webkit-scrollbar-thumb:hover {
+            background: rgba(58, 134, 255, 0.7);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .font-toolbar {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: calc(100% - 20px);
+            }
+            
+            .font-options {
+                max-height: 300px;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-visual {
+                width: 350px;
+                height: 350px;
+            }
+            
+            .nav-overlay {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .sketches-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .theme-toggle {
+                position: static;
+                margin: 30px auto;
+                display: block;
+                width: fit-content;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <!-- Font Selector Toolbar -->
+    <div class="font-toolbar">
+        <div class="font-toolbar-header">
+            <span class="font-toolbar-title">Font Selector</span>
+            <button class="font-toolbar-toggle" onclick="toggleFontToolbar()">−</button>
+        </div>
+        
+        <!-- Font Size Controls -->
+        <div class="font-size-controls" id="fontSizeControls">
+            <div class="font-size-label">Font Size</div>
+            <div class="font-size-slider-container">
+                <input type="range" min="100" max="200" value="100" step="10" 
+                       class="font-size-slider" id="fontSizeSlider" 
+                       oninput="changeFontSize(this.value)">
+                <span class="font-size-value" id="fontSizeValue">100%</span>
+            </div>
+            <div class="font-size-buttons">
+                <button class="font-size-btn" onclick="setFontSize(100)">Normal</button>
+                <button class="font-size-btn" onclick="setFontSize(140)">Large</button>
+                <button class="font-size-btn" onclick="setFontSize(170)">XL</button>
+                <button class="font-size-btn" onclick="setFontSize(200)">XXL</button>
+            </div>
+        </div>
+        
+        <div class="font-options" id="fontOptions">
+            <button class="font-option" onclick="changeFont('IBM Plex Mono', this)">
+                <div>IBM Plex Mono</div>
+                <div class="font-preview" style="font-family: 'IBM Plex Mono', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('Inter', this)">
+                <div>Inter (Default)</div>
+                <div class="font-preview" style="font-family: 'Inter', sans-serif;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('Space Mono', this)">
+                <div>Space Mono</div>
+                <div class="font-preview" style="font-family: 'Space Mono', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('JetBrains Mono', this)">
+                <div>JetBrains Mono</div>
+                <div class="font-preview" style="font-family: 'JetBrains Mono', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('Courier Prime', this)">
+                <div>Courier Prime</div>
+                <div class="font-preview" style="font-family: 'Courier Prime', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('Source Code Pro', this)">
+                <div>Source Code Pro</div>
+                <div class="font-preview" style="font-family: 'Source Code Pro', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('Fira Code', this)">
+                <div>Fira Code</div>
+                <div class="font-preview" style="font-family: 'Fira Code', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option" onclick="changeFont('Roboto Mono', this)">
+                <div>Roboto Mono</div>
+                <div class="font-preview" style="font-family: 'Roboto Mono', monospace;">The quick brown fox</div>
+            </button>
+            <button class="font-option active" onclick="changeFont('VT323', this)">
+                <div>VT323 (Retro)</div>
+                <div class="font-preview" style="font-family: 'VT323', monospace;">The quick brown fox</div>
+            </button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Main Landing Page -->
+        <div id="landing" class="content-section active">
+            <div class="hero">
+                <div class="hero-content">
+                    <div class="title-container">
+                        <div class="title-wave" id="titleWave1"></div>
+                        <div class="title-wave" id="titleWave2"></div>
+                        <div class="title-wave" id="titleWave3"></div>
+                    </div>
+                    <p class="subtitle">MIDI Visualizer Collection</p>
+                    <p class="hero-description">
+                        Transform your music into mesmerizing visual art. Real-time MIDI visualization 
+                        with Newton's color spectrum, bringing synesthesia to life in your browser.
+                    </p>
+                </div>
+                
+                <div class="main-visual">
+                    <canvas class="rainbow-circle" id="rainbowCircle"></canvas>
+                    
+                    <div class="nav-overlay">
+                        <div class="nav-card" onclick="showSection('howItWorks')">
+                            <h3>How it works!</h3>
+                        </div>
+                        <div class="nav-card" onclick="showSection('demo')">
+                            <h3>Demo</h3>
+                        </div>
+                        <div class="nav-card" onclick="showSection('versions')">
+                            <h3>Versions</h3>
+                        </div>
+                        <div class="nav-card" onclick="showSection('updates')">
+                            <h3>Updates</h3>
+                        </div>
+                        <div class="nav-card" onclick="showSection('templates')">
+                            <h3>User templates</h3>
+                        </div>
+                        <div class="nav-card" onclick="showSection('resources')">
+                            <h3>Resources</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="theme-toggle" onclick="alert('Theme customization coming soon!')">
+                    THEME FLIP
+                </button>
+            </div>
+            
+            <!-- Sketches Section -->
+            <div class="sketches-section">
+                <h2 class="section-title">Sketch & Inspiration</h2>
+                
+                <div class="sketches-grid">
+                    <div class="sketch-card">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f0e6ff' width='400' height='300'/%3E%3Cg stroke='%23ff6b6b' stroke-width='3' fill='none'%3E%3Cpath d='M20 150 Q50 100 80 150 T140 150 T200 150 T260 150 T320 150 T380 150'/%3E%3Cpath d='M20 180 L80 180 L80 200 M100 180 L160 180 M180 200 L180 180 L240 180 L240 200 M260 180 L320 180 L320 200 L260 200'/%3E%3C/g%3E%3C/svg%3E" alt="Original Sketch">
+                        <h4>Original Concept</h4>
+                        <p>Hand-drawn wireframe showing waveform lettering and navigation layout</p>
+                    </div>
+                    
+                    <div class="sketch-card">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23fff9e6' width='400' height='300'/%3E%3Cg%3E%3Ctext x='50' y='80' font-family='monospace' font-size='24' fill='%23ff9f43'%3Ewaveform%3C/text%3E%3Ctext x='50' y='120' font-family='monospace' font-size='16' fill='%23666'%3Emath notebook%3C/text%3E%3Crect x='50' y='140' width='300' height='120' fill='none' stroke='%23ddd' stroke-width='2'/%3E%3Cline x1='70' y1='160' x2='330' y2='160' stroke='%23ddd'/%3E%3Cline x1='70' y1='180' x2='330' y2='180' stroke='%23ddd'/%3E%3C/g%3E%3C/svg%3E" alt="Math Notebook">
+                        <h4>Technical Planning</h4>
+                        <p>Mathematical concepts and waveform calculations for visualizations</p>
+                    </div>
+                </div>
+                
+                <h2 class="section-title" style="margin-top: 60px;">Visual References</h2>
+                
+                <div class="visualizers-grid">
+                    <div class="visualizer-card">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect fill='%23000' width='300' height='200'/%3E%3Cg%3E%3Cpath d='M10 100 Q40 60 70 100 T130 100 T190 100 T250 100 T290 100' stroke='%2300f0ff' stroke-width='3' fill='none'/%3E%3Cpath d='M10 120 Q40 160 70 120 T130 120 T190 120 T250 120 T290 120' stroke='%23ff00ff' stroke-width='3' fill='none'/%3E%3C/g%3E%3C/svg%3E" alt="Audio Waveforms">
+                        <h5>Audio Waveforms</h5>
+                    </div>
+                    <div class="visualizer-card">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect fill='%23000' width='300' height='200'/%3E%3Cg%3E%3Crect x='20' y='140' width='15' height='40' fill='%23ff0066'/%3E%3Crect x='45' y='100' width='15' height='80' fill='%23ff6600'/%3E%3Crect x='70' y='60' width='15' height='120' fill='%23ffcc00'/%3E%3Crect x='95' y='80' width='15' height='100' fill='%2300ff66'/%3E%3Crect x='120' y='120' width='15' height='60' fill='%2300ffcc'/%3E%3C/g%3E%3C/svg%3E" alt="Frequency Bars">
+                        <h5>Frequency Visualizers</h5>
+                    </div>
+                    <div class="visualizer-card">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect fill='%23000' width='300' height='200'/%3E%3Ccircle cx='150' cy='100' r='60' fill='none' stroke='url(%23gradient1)' stroke-width='30'/%3E%3Cdefs%3E%3ClinearGradient id='gradient1'%3E%3Cstop offset='0%25' stop-color='%23ff00ff'/%3E%3Cstop offset='50%25' stop-color='%2300ffff'/%3E%3Cstop offset='100%25' stop-color='%23ff00ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E" alt="Circular Visualizer">
+                        <h5>Circular Spectrum</h5>
+                    </div>
+                    <div class="visualizer-card">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect fill='%23000' width='300' height='200'/%3E%3Cg opacity='0.7'%3E%3Ccircle cx='80' cy='100' r='20' fill='%23ff00ff'/%3E%3Ccircle cx='150' cy='80' r='30' fill='%2300ffff'/%3E%3Ccircle cx='220' cy='120' r='25' fill='%23ffff00'/%3E%3C/g%3E%3C/svg%3E" alt="Particle System">
+                        <h5>Particle Systems</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- How It Works Section -->
+        <div id="howItWorks" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>How It Works</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎹 MIDI Setup</h4>
+                <p>Synesthesia visualizes your music in real-time by connecting to MIDI data:</p>
+                <ul>
+                    <li><strong>Step 1:</strong> Open Audio MIDI Setup on your Mac</li>
+                    <li><strong>Step 2:</strong> Create IAC (Inter-Application Communication) buses for each track you want to visualize</li>
+                    <li><strong>Step 3:</strong> In your DAW (Logic Pro, Ableton, etc.), route each track's MIDI output to a different IAC bus</li>
+                    <li><strong>Step 4:</strong> Open any Synesthesia visualizer in your browser - it will automatically detect and connect to your MIDI inputs</li>
+                    <li><strong>Step 5:</strong> Play your music and watch it come to life!</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎨 Newton's Color Wheel</h4>
+                <p>Each visualizer uses Newton's color spectrum mapping, where musical notes are assigned specific colors based on their frequency:</p>
+                <ul>
+                    <li><strong>C</strong> - Violet</li>
+                    <li><strong>D</strong> - Red</li>
+                    <li><strong>E</strong> - Orange</li>
+                    <li><strong>F</strong> - Yellow</li>
+                    <li><strong>G</strong> - Green</li>
+                    <li><strong>A</strong> - Blue</li>
+                    <li><strong>B</strong> - Indigo</li>
+                </ul>
+                <p>Octaves control brightness - lower octaves (C0) are darker, higher octaves (C10) are brighter. Velocity affects size and saturation.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎛️ Customization</h4>
+                <p>Every visualizer includes extensive customization options:</p>
+                <ul>
+                    <li>Particle size and behavior</li>
+                    <li>Background styles and colors</li>
+                    <li>Visual effects (glow, trails, blur)</li>
+                    <li>Display modes (lanes vs. layers)</li>
+                    <li>Color schemes and intensity</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Demo Section -->
+        <div id="demo" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>Demo</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎬 Try It Out</h4>
+                <p>Each visualizer has a built-in demo mode that you can test without MIDI setup. Simply open any version and use the on-screen piano or connect a MIDI keyboard.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>📺 Video Demonstrations</h4>
+                <p>Coming soon: Video tutorials and demonstrations of each visualizer style with different musical genres.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎵 Recommended Test Tracks</h4>
+                <ul>
+                    <li><strong>Classical:</strong> Try Bach or Debussy for complex polyphonic patterns</li>
+                    <li><strong>Electronic:</strong> Synthwave or EDM for rhythm and bass visualization</li>
+                    <li><strong>Jazz:</strong> Complex chords show beautiful color mixing</li>
+                    <li><strong>Minimal:</strong> Ambient or minimal techno for clean, meditative visuals</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Versions Section -->
+        <div id="versions" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>Versions</h2>
+            </div>
+            
+            <div class="versions-grid">
+                <div class="version-card">
+                    <h4>🎨 Original Lightweight</h4>
+                    <span class="version-badge">Core</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>The foundation version with Newton's color wheel mapping, chord detection, and extensive background customization options including gradient mixer and additive color modes.</p>
+                    <a href="newton-midi-visualizer-fixed.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>🌆 Retro Synthwave</h4>
+                    <span class="version-badge">Style</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>80s aesthetic with diamond-shaped particles, neon glow effects, perspective grid floor, and classic sunset gradient. Hot pink, cyan, and electric purple dominate.</p>
+                    <a href="newton-midi-synthwave.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>🎭 Kandinsky</h4>
+                    <span class="version-badge">Style</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>Inspired by abstract expressionism with geometric shapes (circles, squares, triangles), bold primary colors, thick black borders, and Bauhaus design principles.</p>
+                    <a href="newton-midi-kandinsky.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>⚫ Minimal Monochrome</h4>
+                    <span class="version-badge">Style</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>Pure black and white elegance. Simple circles with focus on form, motion, and negative space. Multiple fade styles and background options for different moods.</p>
+                    <a href="newton-midi-minimal.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>〰️ Oscilloscope</h4>
+                    <span class="version-badge">Technical</span>
+                    <span class="version-badge">v1.1</span>
+                    <p>Real-time waveform visualization. MIDI notes converted to sine waves at their actual frequencies, with dynamic horizontal scrolling and additive color mixing.</p>
+                    <a href="newton-midi-oscilloscope.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+            </div>
+            
+            <div class="info-box" style="margin-top: 40px;">
+                <h4>📋 Version Comparison</h4>
+                <p><strong>Lanes Mode:</strong> All versions (except Oscilloscope) support lanes mode where each MIDI track gets its own horizontal lane.</p>
+                <p><strong>Layers Mode:</strong> Stack all tracks with depth effects for a unified composition view.</p>
+                <p><strong>Customization:</strong> Each version has unique settings tailored to its aesthetic.</p>
+            </div>
+        </div>
+        
+        <!-- Updates Section -->
+        <div id="updates" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>Updates</h2>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🌊 Oscilloscope v1.1 - Performance Update</h4>
+                        <p>Fixed note counter display bug and significantly improved waveform dynamics. Speed range increased to 1-50, added horizontal scrolling animation for smooth wave movement across screen.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>〰️ Oscilloscope Mode Released</h4>
+                        <p>New technical visualization showing real-time waveforms. MIDI notes converted to sine waves at their actual frequencies with Newton color mapping and additive mixing.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🎨 Style Pack Release</h4>
+                        <p>Three new stylistic versions launched: Retro Synthwave (80s neon aesthetic), Kandinsky (geometric abstract art), and Minimal Monochrome (pure B&W elegance).</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🔧 Core Update - Background Opacity Fix</h4>
+                        <p>Fixed master background opacity control. Now properly applies to all background modes (gradient, solid, and additive). Enhanced color mixing with W3Schools algorithm.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🎵 Initial Release - Core Visualizer</h4>
+                        <p>First version launched with Newton color wheel mapping, chord detection, multiple background modes, and extensive customization options. Support for unlimited MIDI tracks.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box" style="margin-top: 40px;">
+                <h4>🚀 Upcoming Features</h4>
+                <ul>
+                    <li>Recording and export functionality (video/GIF)</li>
+                    <li>MIDI file playback support</li>
+                    <li>Additional visual styles (Aurora, Underwater, Fire)</li>
+                    <li>Preset management system</li>
+                    <li>Performance optimizations for 4K displays</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- User Templates Section -->
+        <div id="templates" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>User Templates</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>📦 Coming Soon</h4>
+                <p>This section will feature user-created custom templates, presets, and configurations. Share your favorite settings and discover setups from the community.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>💡 How to Save Your Settings</h4>
+                <p>Currently, each visualizer's settings are stored in the browser for the session. Future updates will include:</p>
+                <ul>
+                    <li>Preset save/load functionality</li>
+                    <li>Export/import settings as JSON files</li>
+                    <li>Cloud-based preset library</li>
+                    <li>Community template sharing</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎨 Create Your Own</h4>
+                <p>Want to create a custom style? All visualizers are open source. You can modify the HTML files to create your own unique aesthetic. Share your creations with the community!</p>
+            </div>
+        </div>
+        
+        <!-- Resources Section -->
+        <div id="resources" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>Resources</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>📚 Documentation</h4>
+                <ul>
+                    <li><strong>MIDI Setup Guide:</strong> Detailed instructions for configuring IAC buses on macOS</li>
+                    <li><strong>Color Theory:</strong> Understanding Newton's color wheel and frequency-to-color mapping</li>
+                    <li><strong>Customization Guide:</strong> Deep dive into all available settings and options</li>
+                    <li><strong>Technical Specs:</strong> How the visualizers process MIDI data and render graphics</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎹 Compatible DAWs</h4>
+                <ul>
+                    <li>Logic Pro (recommended)</li>
+                    <li>Ableton Live</li>
+                    <li>FL Studio</li>
+                    <li>GarageBand</li>
+                    <li>Any DAW with MIDI routing capabilities</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🔧 Browser Compatibility</h4>
+                <ul>
+                    <li><strong>Chrome/Edge:</strong> Full support, best performance</li>
+                    <li><strong>Firefox:</strong> Full support</li>
+                    <li><strong>Safari:</strong> Full support</li>
+                    <li><strong>Requirements:</strong> Web MIDI API support, Canvas 2D rendering</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>💻 System Requirements</h4>
+                <ul>
+                    <li><strong>OS:</strong> macOS (for MIDI routing), Windows (with loopMIDI), Linux</li>
+                    <li><strong>RAM:</strong> 4GB minimum, 8GB recommended</li>
+                    <li><strong>Display:</strong> Any resolution, optimized for 1920x1080 and above</li>
+                    <li><strong>GPU:</strong> Hardware acceleration recommended for best performance</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🆘 Troubleshooting</h4>
+                <ul>
+                    <li><strong>No MIDI connection:</strong> Ensure IAC buses are enabled in Audio MIDI Setup</li>
+                    <li><strong>Low frame rate:</strong> Reduce max particles or disable glow effects</li>
+                    <li><strong>Colors not accurate:</strong> Check your display's color profile</li>
+                    <li><strong>Sync issues:</strong> Adjust buffer size in your DAW's audio settings</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🔗 Useful Links</h4>
+                <ul>
+                    <li><a href="https://en.wikipedia.org/wiki/Synesthesia" target="_blank" style="color: #3a86ff;">Learn about Synesthesia</a></li>
+                    <li><a href="https://en.wikipedia.org/wiki/Newton_disc" target="_blank" style="color: #3a86ff;">Newton's Color Wheel</a></li>
+                    <li><a href="https://www.w3.org/TR/webmidi/" target="_blank" style="color: #3a86ff;">Web MIDI API Documentation</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Synesthesia MIDI Visualizer Collection • 2025</p>
+            <p>Bringing color to sound, one note at a time.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Newton's color spectrum
+        const NEWTON_SPECTRUM = [
+            [148, 0, 211],    // Violet
+            [75, 0, 130],     // Indigo
+            [0, 0, 255],      // Blue
+            [0, 128, 255],    // Cyan
+            [0, 255, 0],      // Green
+            [127, 255, 0],    // Yellow-green
+            [255, 255, 0],    // Yellow
+            [255, 140, 0],    // Orange
+            [255, 0, 0],      // Red
+            [255, 0, 128]     // Red-pink
+        ];
+        
+        // Draw waveform letter
+        function drawWaveformLetter(ctx, letter, x, y, size, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = color;
+            
+            const w = size * 0.6;
+            const h = size;
+            
+            ctx.lineJoin = 'miter';
+            ctx.miterLimit = 10;
+            
+            ctx.beginPath();
+            
+            switch(letter.toUpperCase()) {
+                case 'W':
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + w*0.15, y + h);
+                    ctx.lineTo(x + w*0.35, y + h*0.3);
+                    ctx.lineTo(x + w*0.65, y + h*0.3);
+                    ctx.lineTo(x + w*0.85, y + h);
+                    ctx.lineTo(x + w, y);
+                    break;
+                case 'E':
+                    ctx.moveTo(x + w, y);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(x, y + h*0.45);
+                    ctx.lineTo(x + w*0.7, y + h*0.45);
+                    ctx.moveTo(x, y + h*0.55);
+                    ctx.lineTo(x, y + h);
+                    ctx.lineTo(x + w, y + h);
+                    break;
+                case 'L':
+                    ctx.moveTo(x + w*0.2, y);
+                    ctx.lineTo(x + w*0.2, y + h*0.8);
+                    ctx.lineTo(x, y + h);
+                    ctx.lineTo(x + w, y + h);
+                    break;
+                case 'C':
+                    ctx.moveTo(x + w, y + h*0.15);
+                    ctx.lineTo(x + w*0.7, y);
+                    ctx.lineTo(x + w*0.3, y);
+                    ctx.lineTo(x, y + h*0.3);
+                    ctx.lineTo(x, y + h*0.7);
+                    ctx.lineTo(x + w*0.3, y + h);
+                    ctx.lineTo(x + w*0.7, y + h);
+                    ctx.lineTo(x + w, y + h*0.85);
+                    break;
+                case 'O':
+                    ctx.moveTo(x + w*0.3, y);
+                    ctx.lineTo(x + w*0.7, y);
+                    ctx.lineTo(x + w, y + h*0.3);
+                    ctx.lineTo(x + w, y + h*0.7);
+                    ctx.lineTo(x + w*0.7, y + h);
+                    ctx.lineTo(x + w*0.3, y + h);
+                    ctx.lineTo(x, y + h*0.7);
+                    ctx.lineTo(x, y + h*0.3);
+                    ctx.closePath();
+                    break;
+                case 'M':
+                    ctx.moveTo(x, y + h);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(x + w*0.3, y + h*0.4);
+                    ctx.lineTo(x + w*0.5, y + h*0.25);
+                    ctx.lineTo(x + w*0.7, y + h*0.4);
+                    ctx.lineTo(x + w, y);
+                    ctx.lineTo(x + w, y + h);
+                    break;
+                case 'T':
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + w, y);
+                    ctx.moveTo(x + w*0.5, y);
+                    ctx.lineTo(x + w*0.5, y + h*0.85);
+                    ctx.lineTo(x + w*0.35, y + h);
+                    ctx.lineTo(x + w*0.65, y + h);
+                    break;
+                case 'S':
+                    ctx.moveTo(x + w, y + h*0.15);
+                    ctx.lineTo(x + w*0.7, y);
+                    ctx.lineTo(x + w*0.3, y);
+                    ctx.lineTo(x, y + h*0.25);
+                    ctx.lineTo(x + w*0.3, y + h*0.45);
+                    ctx.lineTo(x + w*0.7, y + h*0.55);
+                    ctx.lineTo(x + w, y + h*0.75);
+                    ctx.lineTo(x + w*0.7, y + h);
+                    ctx.lineTo(x + w*0.3, y + h);
+                    ctx.lineTo(x, y + h*0.85);
+                    break;
+                case 'Y':
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + w*0.5, y + h*0.5);
+                    ctx.lineTo(x + w, y);
+                    ctx.moveTo(x + w*0.5, y + h*0.5);
+                    ctx.lineTo(x + w*0.5, y + h*0.85);
+                    ctx.lineTo(x + w*0.35, y + h);
+                    ctx.lineTo(x + w*0.65, y + h);
+                    break;
+                case 'N':
+                    ctx.moveTo(x, y + h);
+                    ctx.lineTo(x, y);
+                    ctx.lineTo(x + w*0.2, y + h*0.3);
+                    ctx.lineTo(x + w, y + h);
+                    ctx.lineTo(x + w, y);
+                    break;
+                case 'H':
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x, y + h);
+                    ctx.moveTo(x, y + h*0.45);
+                    ctx.lineTo(x + w, y + h*0.55);
+                    ctx.moveTo(x + w, y);
+                    ctx.lineTo(x + w, y + h);
+                    break;
+                case 'A':
+                    ctx.moveTo(x, y + h);
+                    ctx.lineTo(x + w*0.2, y + h*0.3);
+                    ctx.lineTo(x + w*0.5, y);
+                    ctx.lineTo(x + w*0.8, y + h*0.3);
+                    ctx.lineTo(x + w, y + h);
+                    ctx.moveTo(x + w*0.25, y + h*0.55);
+                    ctx.lineTo(x + w*0.75, y + h*0.65);
+                    break;
+                case 'I':
+                    ctx.moveTo(x + w*0.5, y);
+                    ctx.lineTo(x + w*0.5, y + h);
+                    break;
+                default:
+                    break;
+            }
+            
+            ctx.stroke();
+        }
+        
+        // Draw waveform text
+        function drawWaveformText(canvasId, text) {
+            const container = document.getElementById(canvasId);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 600;
+            canvas.height = 100;
+            
+            container.appendChild(canvas);
+            
+            let phase = 0;
+            let isHovering = false;
+            
+            container.addEventListener('mouseenter', () => { isHovering = true; });
+            container.addEventListener('mouseleave', () => { isHovering = false; });
+            
+            function drawWave(animPhase) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const letterSize = 50;
+                const letterSpacing = 50;
+                const startX = (canvas.width - (text.length * letterSpacing - letterSpacing * 0.3)) / 2;
+                const baseY = (canvas.height - letterSize) / 2;
+                
+                const letterPositions = [];
+                let currentX = startX;
+                
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    if (char !== ' ') {
+                        letterPositions.push({ x: currentX, y: baseY, char: char, index: i });
+                    }
+                    currentX += char === ' ' ? letterSpacing * 0.6 : letterSpacing;
+                }
+                
+                // Draw connecting line
+                if (letterPositions.length > 1) {
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    for (let i = 0; i < letterPositions.length - 1; i++) {
+                        const pos1 = letterPositions[i];
+                        const pos2 = letterPositions[i + 1];
+                        
+                        const colorProgress = pos1.index / (text.length - 1);
+                        const colorIndex = colorProgress * (NEWTON_SPECTRUM.length - 1);
+                        const colorIdx1 = Math.floor(colorIndex);
+                        const colorIdx2 = Math.min(colorIdx1 + 1, NEWTON_SPECTRUM.length - 1);
+                        const colorBlend = colorIndex - colorIdx1;
+                        
+                        const color1 = NEWTON_SPECTRUM[colorIdx1];
+                        const color2 = NEWTON_SPECTRUM[colorIdx2];
+                        
+                        const r = Math.round(color1[0] * (1 - colorBlend) + color2[0] * colorBlend);
+                        const g = Math.round(color1[1] * (1 - colorBlend) + color2[1] * colorBlend);
+                        const b = Math.round(color1[2] * (1 - colorBlend) + color2[2] * colorBlend);
+                        
+                        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.6)`;
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.4)`;
+                        
+                        const startX = pos1.x + letterSize * 0.3;
+                        const endX = pos2.x;
+                        const centerY = baseY + letterSize / 2;
+                        
+                        ctx.beginPath();
+                        const segments = 20;
+                        
+                        for (let s = 0; s <= segments; s++) {
+                            const t = s / segments;
+                            const x = startX + (endX - startX) * t;
+                            
+                            const wave1 = Math.sin(x * 0.08 + animPhase) * 15;
+                            const wave2 = Math.sin(x * 0.15 - animPhase * 0.7) * 8;
+                            const wave3 = Math.sin(x * 0.05 + animPhase * 1.5) * 10;
+                            const totalWave = wave1 + wave2 + wave3;
+                            
+                            const y = centerY + totalWave;
+                            
+                            if (s === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        
+                        ctx.stroke();
+                    }
+                }
+                
+                // Draw letters
+                currentX = startX;
+                
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    
+                    const colorProgress = i / (text.length - 1);
+                    const colorIndex = colorProgress * (NEWTON_SPECTRUM.length - 1);
+                    const colorIdx1 = Math.floor(colorIndex);
+                    const colorIdx2 = Math.min(colorIdx1 + 1, NEWTON_SPECTRUM.length - 1);
+                    const colorBlend = colorIndex - colorIdx1;
+                    
+                    const color1 = NEWTON_SPECTRUM[colorIdx1];
+                    const color2 = NEWTON_SPECTRUM[colorIdx2];
+                    
+                    const r = Math.round(color1[0] * (1 - colorBlend) + color2[0] * colorBlend);
+                    const g = Math.round(color1[1] * (1 - colorBlend) + color2[1] * colorBlend);
+                    const b = Math.round(color1[2] * (1 - colorBlend) + color2[2] * colorBlend);
+                    
+                    const color = `rgb(${r}, ${g}, ${b})`;
+                    const waveOffset = isHovering ? Math.sin(currentX * 0.05 + animPhase) * 5 : 0;
+                    
+                    drawWaveformLetter(ctx, char, currentX, baseY + waveOffset, letterSize, color);
+                    
+                    currentX += char === ' ' ? letterSpacing * 0.6 : letterSpacing;
+                }
+            }
+            
+            function animate() {
+                drawWave(phase);
+                phase += 0.03;
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        // Draw rainbow circle
+        function drawRainbowCircle() {
+            const canvas = document.getElementById('rainbowCircle');
+            const ctx = canvas.getContext('2d');
+            const size = 350;
+            
+            canvas.width = size;
+            canvas.height = size;
+            
+            let rotation = 0;
+            
+            function animate() {
+                ctx.clearRect(0, 0, size, size);
+                
+                const centerX = size / 2;
+                const centerY = size / 2;
+                const radius = size * 0.35;
+                const lineWidth = 60;
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(rotation);
+                ctx.translate(-centerX, -centerY);
+                
+                // Draw multiple rotating arcs
+                const numArcs = 12;
+                for (let i = 0; i < numArcs; i++) {
+                    const startAngle = (i / numArcs) * Math.PI * 2;
+                    const endAngle = ((i + 1) / numArcs) * Math.PI * 2;
+                    
+                    const colorIndex = (i / numArcs) * (NEWTON_SPECTRUM.length - 1);
+                    const colorIdx1 = Math.floor(colorIndex);
+                    const colorIdx2 = Math.min(colorIdx1 + 1, NEWTON_SPECTRUM.length - 1);
+                    const colorBlend = colorIndex - colorIdx1;
+                    
+                    const color1 = NEWTON_SPECTRUM[colorIdx1];
+                    const color2 = NEWTON_SPECTRUM[colorIdx2];
+                    
+                    const r = Math.round(color1[0] * (1 - colorBlend) + color2[0] * colorBlend);
+                    const g = Math.round(color1[1] * (1 - colorBlend) + color2[1] * colorBlend);
+                    const b = Math.round(color1[2] * (1 - colorBlend) + color2[2] * colorBlend);
+                    
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                    ctx.lineWidth = lineWidth;
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+                
+                rotation += 0.005;
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Initialize
+        drawWaveformText('titleWave1', 'Welcome');
+        drawWaveformText('titleWave2', 'To');
+        drawWaveformText('titleWave3', 'Synesthesia');
+        drawRainbowCircle();
+        
+        // Font Selector Functions
+        function changeFont(fontName, button) {
+            // Update body font
+            if (fontName === 'Inter') {
+                document.body.style.fontFamily = `'${fontName}', sans-serif`;
+            } else {
+                document.body.style.fontFamily = `'${fontName}', monospace`;
+            }
+            
+            // Update active state
+            document.querySelectorAll('.font-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            button.classList.add('active');
+            
+            // Save preference to localStorage
+            localStorage.setItem('selectedFont', fontName);
+            
+            // Show confirmation
+            const toolbar = document.querySelector('.font-toolbar');
+            const originalBorder = toolbar.style.borderColor;
+            toolbar.style.borderColor = 'rgba(58, 134, 255, 0.8)';
+            setTimeout(() => {
+                toolbar.style.borderColor = originalBorder;
+            }, 300);
+        }
+        
+        function changeFontSize(value) {
+            // Update font size
+            document.body.style.fontSize = value + '%';
+            
+            // Update display value
+            document.getElementById('fontSizeValue').textContent = value + '%';
+            
+            // Save preference to localStorage
+            localStorage.setItem('fontSize', value);
+        }
+        
+        function setFontSize(value) {
+            // Update slider
+            document.getElementById('fontSizeSlider').value = value;
+            
+            // Apply font size
+            changeFontSize(value);
+        }
+        
+        function toggleFontToolbar() {
+            const options = document.getElementById('fontOptions');
+            const sizeControls = document.getElementById('fontSizeControls');
+            const toggle = document.querySelector('.font-toolbar-toggle');
+            
+            const isCollapsed = options.classList.contains('collapsed');
+            
+            options.classList.toggle('collapsed');
+            sizeControls.classList.toggle('collapsed');
+            
+            if (!isCollapsed) {
+                toggle.textContent = '+';
+            } else {
+                toggle.textContent = '−';
+            }
+            
+            // Save state to localStorage
+            localStorage.setItem('fontToolbarCollapsed', !isCollapsed);
+        }
+        
+        // Load saved font preference on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedFont = localStorage.getItem('selectedFont');
+            const savedFontSize = localStorage.getItem('fontSize');
+            const toolbarCollapsed = localStorage.getItem('fontToolbarCollapsed') === 'true';
+            
+            // Apply saved font
+            if (savedFont) {
+                if (savedFont === 'Inter') {
+                    document.body.style.fontFamily = `'${savedFont}', sans-serif`;
+                } else {
+                    document.body.style.fontFamily = `'${savedFont}', monospace`;
+                }
+                
+                // Update active button
+                document.querySelectorAll('.font-option').forEach(opt => {
+                    const fontDiv = opt.querySelector('div:first-child');
+                    if (fontDiv && (fontDiv.textContent === savedFont || fontDiv.textContent.startsWith(savedFont))) {
+                        opt.classList.add('active');
+                    } else {
+                        opt.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Apply saved font size
+            if (savedFontSize) {
+                document.body.style.fontSize = savedFontSize + '%';
+                document.getElementById('fontSizeSlider').value = savedFontSize;
+                document.getElementById('fontSizeValue').textContent = savedFontSize + '%';
+            }
+            
+            // Restore toolbar state
+            if (toolbarCollapsed) {
+                document.getElementById('fontOptions').classList.add('collapsed');
+                document.getElementById('fontSizeControls').classList.add('collapsed');
+                document.querySelector('.font-toolbar-toggle').textContent = '+';
+            }
+        });
+    </script>
+</body>
+</html>

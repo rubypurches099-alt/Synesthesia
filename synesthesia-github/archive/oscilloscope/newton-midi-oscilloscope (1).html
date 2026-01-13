@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton MIDI - Oscilloscope</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            font-family: 'Roboto Mono', monospace;
+            overflow: hidden;
+            color: #00ff00;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #header {
+            padding: 12px 20px;
+            background: rgba(0,20,0,0.9);
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        }
+        #title { 
+            font-size: 20px; 
+            font-weight: 600; 
+            letter-spacing: 3px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        #controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 2px solid #00ff00;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Roboto Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            background: rgba(0,0,0,0.5);
+            color: #00ff00;
+        }
+        .btn:hover { 
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 15px #00ff00;
+        }
+        #status { 
+            background: rgba(255,0,0,0.3); 
+            color: #ff0000;
+            border-color: #ff0000;
+        }
+        #status.connected { 
+            background: rgba(0,255,0,0.3); 
+            color: #00ff00;
+            border-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        #visualCanvas {
+            flex: 1;
+            display: block;
+            width: 100%;
+            background: #000;
+        }
+        #pianoContainer {
+            height: 180px;
+            background: rgba(0,20,0,0.5);
+            border-top: 2px solid #00ff00;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        #colorMapCanvas, #pianoCanvas {
+            display: block;
+        }
+        #info {
+            padding: 10px;
+            text-align: center;
+            font-size: 10px;
+            background: rgba(0,20,0,0.9);
+            border-top: 2px solid #00ff00;
+            letter-spacing: 2px;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        #guide, #settings {
+            position: fixed;
+            background: rgba(5, 10, 5, 0.98);
+            border: 2px solid #00ff00;
+            border-radius: 0;
+            padding: 25px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 0 30px rgba(0,255,0,0.5);
+        }
+        #guide {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #guide.show, #settings.show { display: block; }
+        #guide h3, #settings h3 { 
+            margin-bottom: 15px; 
+            color: #00ff00; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        #guide p { 
+            margin-bottom: 10px; 
+            font-size: 12px; 
+            line-height: 1.6;
+            color: #00ff00;
+        }
+        #guide .close, #settings button {
+            background: rgba(0,255,0,0.2);
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 0;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #guide .close:hover, #settings button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        #guide .close { float: right; }
+        #settings {
+            top: 80px;
+            right: 20px;
+            width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .setting-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0,255,0,0.3);
+        }
+        .setting-group:last-child { border-bottom: none; }
+        .setting-label {
+            display: block;
+            font-size: 10px;
+            margin-bottom: 8px;
+            color: #00ff00;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .setting-input {
+            width: 100%;
+            padding: 8px;
+            background: rgba(0,255,0,0.05);
+            border: 1px solid rgba(0,255,0,0.3);
+            border-radius: 0;
+            color: #00ff00;
+            font-size: 11px;
+            font-family: 'Roboto Mono', monospace;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .setting-value {
+            display: inline-block;
+            float: right;
+            font-size: 11px;
+            color: #00ff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <div id="title">OSCILLOSCOPE</div>
+            <div id="controls">
+                <div id="status" class="btn">● OFFLINE</div>
+                <button id="guideBtn" class="btn">Guide</button>
+                <button id="settingsBtn" class="btn">Settings</button>
+            </div>
+        </div>
+        <canvas id="visualCanvas"></canvas>
+        <div id="pianoContainer">
+            <canvas id="colorMapCanvas"></canvas>
+            <canvas id="pianoCanvas"></canvas>
+        </div>
+        <div id="info">
+            <span id="trackCount">NO SIGNAL</span> • 
+            WAVEFORM ANALYSIS • 
+            FREQUENCY SPECTRUM
+        </div>
+    </div>
+
+    <div id="guide">
+        <button class="close" onclick="document.getElementById('guide').classList.remove('show')">✕ CLOSE</button>
+        <h3>OSCILLOSCOPE MODE</h3>
+        <p><strong>CONCEPT:</strong> This visualizer transforms MIDI note data into oscilloscope-style waveforms. Each note generates a sine wave at its corresponding frequency, creating a real-time audio visualization.</p>
+        <p><strong>WAVEFORM DISPLAY:</strong> Each track gets its own horizontal lane with a continuously scrolling waveform. Active notes generate sine waves that sum together, creating complex interference patterns.</p>
+        <p><strong>COLOR MAPPING:</strong> Waveforms are colored using Newton's color wheel - each note frequency has its corresponding color. When multiple notes play together, their colors mix additively.</p>
+        <p><strong>TECHNICAL:</strong> The amplitude of each sine wave is determined by MIDI velocity. Frequency is calculated from MIDI note number (A4 = 440Hz). Waves scroll from right to left in real-time.</p>
+        <hr style="margin: 15px 0; border-color: #00ff00;">
+        <p><strong>MIDI SETUP:</strong></p>
+        <p>1. Configure IAC buses in Audio MIDI Setup</p>
+        <p>2. Route each track to a different bus</p>
+        <p>3. Watch your music become waveforms</p>
+    </div>
+
+    <div id="settings">
+        <h3>SETTINGS</h3>
+        
+        <div class="setting-group">
+            <label class="setting-label">
+                Waveform Speed
+                <span class="setting-value" id="speedValue">3</span>
+            </label>
+            <input type="range" id="waveSpeed" min="1" max="10" value="3" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Amplitude Scale
+                <span class="setting-value" id="amplitudeValue">0.8</span>
+            </label>
+            <input type="range" id="amplitude" min="0.2" max="1.5" step="0.1" value="0.8" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Line Thickness
+                <span class="setting-value" id="thicknessValue">2</span>
+            </label>
+            <input type="range" id="lineThickness" min="1" max="5" value="2" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Glow Intensity
+                <span class="setting-value" id="glowValue">15</span>
+            </label>
+            <input type="range" id="glowIntensity" min="0" max="30" value="15" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Wave Decay
+                <span class="setting-value" id="decayValue">500ms</span>
+            </label>
+            <input type="range" id="waveDecay" min="100" max="2000" step="100" value="500" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Grid Display
+                <span class="setting-value" id="gridValue">On</span>
+            </label>
+            <select id="gridDisplay" class="setting-input">
+                <option value="on" selected>On</option>
+                <option value="off">Off</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Color Mode
+                <span class="setting-value" id="colorValue">Newton</span>
+            </label>
+            <select id="colorMode" class="setting-input">
+                <option value="newton" selected>Newton Spectrum</option>
+                <option value="green">Classic Green</option>
+                <option value="mixed">Mixed Colors</option>
+            </select>
+        </div>
+
+        <button onclick="document.getElementById('settings').classList.remove('show')" style="width: 100%; padding: 10px; margin-top: 10px;">
+            ✓ APPLY
+        </button>
+    </div>
+
+    <script>
+        // Newton's color wheel
+        const NEWTON = [
+            [148, 0, 211],    // C - Violet
+            [204, 0, 102],    // C# - Red-violet
+            [255, 0, 0],      // D - Red
+            [255, 69, 0],     // D# - Red-orange
+            [255, 140, 0],    // E - Orange
+            [255, 255, 0],    // F - Yellow
+            [127, 255, 0],    // F# - Yellow-green
+            [0, 255, 0],      // G - Green
+            [0, 128, 255],    // G# - Cyan
+            [0, 0, 255],      // A - Blue
+            [75, 0, 130],     // A# - Indigo
+            [139, 0, 255]     // B - Violet
+        ];
+
+        // State
+        let devices = [];
+        let activeNotes = {};
+        let waveformData = {};
+        let lastFrame = 0;
+        
+        // Settings
+        let settings = {
+            waveSpeed: 3,
+            amplitude: 0.8,
+            lineThickness: 2,
+            glowIntensity: 15,
+            waveDecay: 500,
+            gridDisplay: 'on',
+            colorMode: 'newton'
+        };
+
+        // Canvas
+        const vc = document.getElementById('visualCanvas');
+        const vctx = vc.getContext('2d', { alpha: false });
+        const cmc = document.getElementById('colorMapCanvas');
+        const cmctx = cmc.getContext('2d');
+        const pc = document.getElementById('pianoCanvas');
+        const pctx = pc.getContext('2d');
+
+        function resize() {
+            vc.width = vc.offsetWidth;
+            vc.height = vc.offsetHeight;
+            cmc.width = 1000;
+            cmc.height = 45;
+            pc.width = 1000;
+            pc.height = 120;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Convert MIDI note to frequency (A4 = 440Hz)
+        function midiToFreq(midi) {
+            return 440 * Math.pow(2, (midi - 69) / 12);
+        }
+
+        // MIDI
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(access => {
+                const inputs = Array.from(access.inputs.values());
+                devices = inputs;
+
+                if (inputs.length > 0) {
+                    document.getElementById('status').textContent = `✓ ONLINE`;
+                    document.getElementById('status').classList.add('connected');
+                    document.getElementById('trackCount').textContent = `${inputs.length} TRACK(S) ACTIVE`;
+                    
+                    inputs.forEach((input, idx) => {
+                        activeNotes[idx] = {};
+                        waveformData[idx] = {
+                            phase: 0,
+                            notes: []
+                        };
+                        input.onmidimessage = (m) => midi(m, idx);
+                    });
+                }
+            });
+        }
+
+        function midi(msg, idx) {
+            const [cmd, note, vel] = msg.data;
+            const on = cmd >= 144 && cmd <= 159 && vel > 0;
+            const off = (cmd >= 128 && cmd <= 143) || (cmd >= 144 && cmd <= 159 && vel === 0);
+
+            if (on) {
+                activeNotes[idx][note] = vel;
+                
+                const freq = midiToFreq(note);
+                const n = note % 12;
+                const [r, g, b] = NEWTON[n];
+                
+                // Add or update note in waveform data
+                const existingNote = waveformData[idx].notes.find(n => n.midi === note);
+                if (existingNote) {
+                    existingNote.velocity = vel;
+                    existingNote.timestamp = Date.now();
+                } else {
+                    waveformData[idx].notes.push({
+                        midi: note,
+                        freq: freq,
+                        velocity: vel,
+                        r: r,
+                        g: g,
+                        b: b,
+                        phase: 0,
+                        timestamp: Date.now()
+                    });
+                }
+                
+            } else if (off) {
+                delete activeNotes[idx][note];
+                
+                // Mark note for decay
+                const noteData = waveformData[idx].notes.find(n => n.midi === note);
+                if (noteData) {
+                    noteData.releaseTime = Date.now();
+                }
+            }
+        }
+
+        function drawGrid(y, h) {
+            if (settings.gridDisplay === 'off') return;
+            
+            vctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
+            vctx.lineWidth = 1;
+            
+            // Horizontal center line
+            vctx.beginPath();
+            vctx.moveTo(0, y + h / 2);
+            vctx.lineTo(vc.width, y + h / 2);
+            vctx.stroke();
+            
+            // Vertical time markers
+            const spacing = 50;
+            for (let x = 0; x < vc.width; x += spacing) {
+                vctx.beginPath();
+                vctx.moveTo(x, y);
+                vctx.lineTo(x, y + h);
+                vctx.stroke();
+            }
+            
+            // Quarter and three-quarter lines
+            vctx.strokeStyle = 'rgba(0, 255, 0, 0.05)';
+            vctx.beginPath();
+            vctx.moveTo(0, y + h / 4);
+            vctx.lineTo(vc.width, y + h / 4);
+            vctx.moveTo(0, y + 3 * h / 4);
+            vctx.lineTo(vc.width, y + 3 * h / 4);
+            vctx.stroke();
+        }
+
+        function drawWaveform(trackIdx, y, h, dt) {
+            const data = waveformData[trackIdx];
+            const now = Date.now();
+            
+            // Clean up old notes
+            data.notes = data.notes.filter(note => {
+                if (!note.releaseTime) return true;
+                return (now - note.releaseTime) < settings.waveDecay;
+            });
+            
+            if (data.notes.length === 0) return;
+            
+            // Calculate waveform points
+            const points = [];
+            const numPoints = vc.width;
+            const centerY = y + h / 2;
+            
+            for (let x = 0; x < numPoints; x++) {
+                let sum = 0;
+                let colorSum = [0, 0, 0];
+                let totalWeight = 0;
+                
+                data.notes.forEach(note => {
+                    // Calculate decay if note is released
+                    let amplitude = note.velocity / 127 * settings.amplitude;
+                    if (note.releaseTime) {
+                        const timeSinceRelease = now - note.releaseTime;
+                        const decayFactor = 1 - (timeSinceRelease / settings.waveDecay);
+                        amplitude *= Math.max(0, decayFactor);
+                    }
+                    
+                    // Calculate phase for this x position
+                    const timeOffset = (vc.width - x) / vc.width * 0.1; // Look back in time
+                    const phase = note.phase + timeOffset * note.freq * 0.05;
+                    const wave = Math.sin(phase) * amplitude;
+                    
+                    sum += wave;
+                    
+                    // Mix colors based on amplitude
+                    const weight = Math.abs(wave);
+                    colorSum[0] += note.r * weight;
+                    colorSum[1] += note.g * weight;
+                    colorSum[2] += note.b * weight;
+                    totalWeight += weight;
+                });
+                
+                // Normalize color
+                if (totalWeight > 0) {
+                    colorSum[0] /= totalWeight;
+                    colorSum[1] /= totalWeight;
+                    colorSum[2] /= totalWeight;
+                }
+                
+                points.push({
+                    x: x,
+                    y: centerY + sum * (h / 2) * 0.9,
+                    color: colorSum
+                });
+            }
+            
+            // Draw waveform
+            if (points.length < 2) return;
+            
+            // Apply glow if enabled
+            if (settings.glowIntensity > 0) {
+                vctx.shadowBlur = settings.glowIntensity;
+            }
+            
+            vctx.lineWidth = settings.lineThickness;
+            vctx.lineCap = 'round';
+            vctx.lineJoin = 'round';
+            
+            // Draw line segments with color interpolation
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                
+                // Use color from current point
+                let color;
+                if (settings.colorMode === 'green') {
+                    color = 'rgb(0, 255, 0)';
+                } else if (settings.colorMode === 'newton') {
+                    color = `rgb(${Math.round(p1.color[0])}, ${Math.round(p1.color[1])}, ${Math.round(p1.color[2])})`;
+                } else { // mixed
+                    const avg = (p1.color[0] + p1.color[1] + p1.color[2]) / 3;
+                    color = `rgb(${Math.round(p1.color[0] * 0.7 + avg * 0.3)}, ${Math.round(p1.color[1] * 0.7 + avg * 0.3)}, ${Math.round(p1.color[2] * 0.7 + avg * 0.3)})`;
+                }
+                
+                vctx.strokeStyle = color;
+                vctx.shadowColor = color;
+                
+                vctx.beginPath();
+                vctx.moveTo(p1.x, p1.y);
+                vctx.lineTo(p2.x, p2.y);
+                vctx.stroke();
+            }
+            
+            vctx.shadowBlur = 0;
+            
+            // Update phase
+            data.notes.forEach(note => {
+                note.phase += dt * 0.001 * settings.waveSpeed * note.freq * 0.1;
+            });
+        }
+
+        function draw(time) {
+            const dt = time - lastFrame;
+            
+            if (dt < 16) { // ~60fps
+                requestAnimationFrame(draw);
+                return;
+            }
+            lastFrame = time;
+
+            // Clear background
+            vctx.fillStyle = '#000000';
+            vctx.fillRect(0, 0, vc.width, vc.height);
+
+            const n = Object.keys(waveformData).length || 1;
+            const h = vc.height / n;
+
+            Object.entries(waveformData).forEach(([idx, data], i) => {
+                const ly = i * h;
+                
+                // Draw grid
+                drawGrid(ly, h);
+                
+                // Draw lane separator
+                vctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                vctx.lineWidth = 2;
+                vctx.beginPath();
+                vctx.moveTo(0, ly);
+                vctx.lineTo(vc.width, ly);
+                vctx.stroke();
+                
+                // Draw waveform
+                drawWaveform(idx, ly, h, dt);
+                
+                // Track label
+                vctx.fillStyle = 'rgba(0, 255, 0, 0.6)';
+                vctx.font = '12px Roboto Mono';
+                vctx.shadowColor = '#00ff00';
+                vctx.shadowBlur = 5;
+                vctx.fillText(`TRACK ${parseInt(idx) + 1}`, 10, ly + 20);
+                vctx.shadowBlur = 0;
+                
+                // Display active notes info
+                if (data.notes.length > 0) {
+                    const activeCount = data.notes.filter(n => !n.releaseTime).length;
+                    vctx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+                    vctx.font = '10px Roboto Mono';
+                    vctx.fillText(`${activeCount} NOTE${activeCount !== 1 ? 'S' : ''}`, 10, ly + 35);
+                }
+            });
+
+            drawColorMap();
+            drawPiano();
+            requestAnimationFrame(draw);
+        }
+
+        function drawColorMap() {
+            cmctx.fillStyle = '#000';
+            cmctx.fillRect(0, 0, cmc.width, cmc.height);
+            
+            const kw = cmc.width / 75;
+            const h = cmc.height;
+
+            let wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if ([1, 3, 6, 8, 10].includes(n)) continue;
+
+                    const [r, g, b] = NEWTON[n];
+                    cmctx.fillStyle = `rgb(${r},${g},${b})`;
+                    cmctx.fillRect(wi * kw, 0, kw, h);
+                    wi++;
+                }
+            }
+
+            wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if (![1, 3, 6, 8, 10].includes(n)) { wi++; continue; }
+
+                    const [r, g, b] = NEWTON[n];
+                    cmctx.fillStyle = `rgb(${r},${g},${b})`;
+                    cmctx.fillRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.65);
+                }
+            }
+        }
+
+        function drawPiano() {
+            pctx.fillStyle = '#000';
+            pctx.fillRect(0, 0, pc.width, pc.height);
+            
+            const kw = pc.width / 75;
+            const h = pc.height;
+
+            let wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if ([1, 3, 6, 8, 10].includes(n)) continue;
+
+                    const midi = (oct + 1) * 12 + n;
+                    let active = false, maxVel = 0;
+                    Object.values(activeNotes).forEach(notes => {
+                        if (notes[midi]) {
+                            active = true;
+                            maxVel = Math.max(maxVel, notes[midi]);
+                        }
+                    });
+
+                    if (active) {
+                        const [r, g, b] = NEWTON[n];
+                        pctx.fillStyle = `rgb(${r},${g},${b})`;
+                        pctx.shadowColor = `rgb(${r},${g},${b})`;
+                        pctx.shadowBlur = 15;
+                    } else {
+                        pctx.fillStyle = '#0a0a0a';
+                        pctx.shadowBlur = 0;
+                    }
+                    
+                    pctx.fillRect(wi * kw, 0, kw - 1, h);
+                    pctx.shadowBlur = 0;
+
+                    pctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+                    pctx.lineWidth = 1;
+                    pctx.strokeRect(wi * kw, 0, kw - 1, h);
+
+                    wi++;
+                }
+            }
+
+            wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if (![1, 3, 6, 8, 10].includes(n)) { wi++; continue; }
+
+                    const midi = (oct + 1) * 12 + n;
+                    let active = false;
+                    Object.values(activeNotes).forEach(notes => {
+                        if (notes[midi]) active = true;
+                    });
+
+                    if (active) {
+                        const [r, g, b] = NEWTON[n];
+                        pctx.fillStyle = `rgb(${r},${g},${b})`;
+                        pctx.shadowColor = `rgb(${r},${g},${b})`;
+                        pctx.shadowBlur = 12;
+                    } else {
+                        pctx.fillStyle = '#000';
+                        pctx.shadowBlur = 0;
+                    }
+                    
+                    pctx.fillRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.6);
+                    pctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        // Controls
+        document.getElementById('guideBtn').onclick = () => {
+            document.getElementById('guide').classList.add('show');
+        };
+
+        document.getElementById('settingsBtn').onclick = () => {
+            document.getElementById('settings').classList.toggle('show');
+        };
+
+        // Settings
+        document.getElementById('waveSpeed').oninput = (e) => {
+            settings.waveSpeed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = settings.waveSpeed;
+        };
+
+        document.getElementById('amplitude').oninput = (e) => {
+            settings.amplitude = parseFloat(e.target.value);
+            document.getElementById('amplitudeValue').textContent = settings.amplitude;
+        };
+
+        document.getElementById('lineThickness').oninput = (e) => {
+            settings.lineThickness = parseInt(e.target.value);
+            document.getElementById('thicknessValue').textContent = settings.lineThickness;
+        };
+
+        document.getElementById('glowIntensity').oninput = (e) => {
+            settings.glowIntensity = parseInt(e.target.value);
+            document.getElementById('glowValue').textContent = settings.glowIntensity;
+        };
+
+        document.getElementById('waveDecay').oninput = (e) => {
+            settings.waveDecay = parseInt(e.target.value);
+            document.getElementById('decayValue').textContent = settings.waveDecay + 'ms';
+        };
+
+        document.getElementById('gridDisplay').onchange = (e) => {
+            settings.gridDisplay = e.target.value;
+            document.getElementById('gridValue').textContent = e.target.value === 'on' ? 'On' : 'Off';
+        };
+
+        document.getElementById('colorMode').onchange = (e) => {
+            settings.colorMode = e.target.value;
+            const labels = {
+                'newton': 'Newton',
+                'green': 'Classic Green',
+                'mixed': 'Mixed Colors'
+            };
+            document.getElementById('colorValue').textContent = labels[e.target.value];
+        };
+
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+WEB TEXT EDIT - LANDING PAGE FORMATTING GUIDE
+==============================================
+
+This guide shows you how to edit text in your Synesthesia landing page.
+
+TABLE OF CONTENTS
+-----------------
+1. Editing the Main Title (Waveform Text)
+2. Editing the Subtitle
+3. Editing the Description
+4. Editing Folder Names
+5. Editing Section Content
+6. Quick Search Tips
+7. Common Text Locations Reference
+8. Pro Tips & Best Practices
+
+
+1. EDITING THE MAIN TITLE (WAVEFORM TEXT)
+==========================================
+
+Location: Near the bottom of the HTML file (around line 1620)
+
+Find this code:
+    // Initialize
+    drawWaveformText('titleWave1', 'Welcome', false);
+    drawWaveformText('titleWave2', 'To', true);  // true = small size
+    drawWaveformText('titleWave3', 'Synesthesia', false);
+
+Change to your text:
+    drawWaveformText('titleWave1', 'Your Text', false);
+    drawWaveformText('titleWave2', 'to', true);
+    drawWaveformText('titleWave3', 'New Name', false);
+
+IMPORTANT NOTES:
+- The middle line with 'true' makes it small (like "to")
+- 'false' makes it full size
+- Keep text short (8-12 characters works best)
+- Supported letters: W E L C O M E T O S Y N H A I (and spaces)
+- Text is case-insensitive but will display as drawn
+
+EXAMPLES:
+    drawWaveformText('titleWave1', 'Hello', false);
+    drawWaveformText('titleWave2', 'To', true);
+    drawWaveformText('titleWave3', 'The Show', false);
+    
+    Result: "Hello" (big) "To" (small) "The Show" (big)
+
+
+2. EDITING THE SUBTITLE
+========================
+
+Location: Around line 885
+
+Find this:
+    <p class="subtitle">MIDI Visualizer Collection</p>
+
+Change to:
+    <p class="subtitle">Your Subtitle Here</p>
+
+NOTES:
+- Text will automatically be uppercase and spaced out
+- Keep it relatively short (20-40 characters recommended)
+- No HTML tags needed inside, just plain text
+
+EXAMPLES:
+    <p class="subtitle">Audio Visual Experience</p>
+    <p class="subtitle">Music Meets Art</p>
+    <p class="subtitle">Ver 2.0</p>
+
+
+3. EDITING THE DESCRIPTION
+===========================
+
+Location: Around line 886-889
+
+Find this:
+    <p class="hero-description">
+        Transform your music into mesmerizing visual art. Real-time MIDI visualization 
+        with Newton's color spectrum, bringing synesthesia to life in your browser.
+    </p>
+
+Change to your description:
+    <p class="hero-description">
+        Your custom description here. You can write multiple sentences
+        and break them across lines for readability in your code.
+    </p>
+
+NOTES:
+- Can be multiple sentences
+- Recommended length: 1-3 sentences (100-200 characters)
+- Line breaks in code don't affect display (it wraps automatically)
+- Keep it concise and engaging
+
+EXAMPLES:
+    <p class="hero-description">
+        Experience music in a whole new way. Watch your compositions 
+        transform into stunning visual art in real-time.
+    </p>
+
+
+4. EDITING FOLDER NAMES
+========================
+
+Location: Around lines 892-920
+
+Find this:
+    <div class="nav-card" onclick="showSection('howItWorks')">
+        <h3>How it works!</h3>
+    </div>
+
+Change ONLY the text between <h3> tags:
+    <div class="nav-card" onclick="showSection('howItWorks')">
+        <h3>Getting Started</h3>
+    </div>
+
+⚠️ CRITICAL: Do NOT change the part inside onclick="showSection('...')"
+   That controls which section opens when clicked!
+
+ALL FOLDER CARDS:
+
+1. How it works:
+    <div class="nav-card" onclick="showSection('howItWorks')">
+        <h3>How it works!</h3>
+    </div>
+
+2. Demo:
+    <div class="nav-card" onclick="showSection('demo')">
+        <h3>Demo</h3>
+    </div>
+
+3. Versions:
+    <div class="nav-card" onclick="showSection('versions')">
+        <h3>Versions</h3>
+    </div>
+
+4. Updates:
+    <div class="nav-card" onclick="showSection('updates')">
+        <h3>Updates</h3>
+    </div>
+
+5. User templates:
+    <div class="nav-card" onclick="showSection('templates')">
+        <h3>User templates</h3>
+    </div>
+
+6. Resources:
+    <div class="nav-card" onclick="showSection('resources')">
+        <h3>Resources</h3>
+    </div>
+
+7. Settings:
+    <div class="nav-card" onclick="showSection('settings')">
+        <h3>Settings</h3>
+    </div>
+
+8. Tutorials:
+    <div class="nav-card" onclick="showSection('tutorials')">
+        <h3>Tutorials</h3>
+    </div>
+
+NOTES:
+- Keep folder names short (1-2 words ideal)
+- Long names may wrap or overflow
+- Use <br> for line breaks: <h3>User<br>templates</h3>
+
+
+5. EDITING SECTION CONTENT
+===========================
+
+Each section (How It Works, Demo, Versions, Settings, Tutorials, etc.) 
+contains content inside <div class="info-box"> tags.
+
+BASIC STRUCTURE:
+    <div class="info-box">
+        <h4>🎹 Section Title</h4>
+        <p>Paragraph text goes here.</p>
+        <ul>
+            <li>List item 1</li>
+            <li>List item 2</li>
+        </ul>
+    </div>
+
+EDITING COMPONENTS:
+
+Section Headers (h4):
+    Find: <h4>🎹 MIDI Setup</h4>
+    Change to: <h4>🎵 Audio Configuration</h4>
+    
+    Note: Emojis are optional but add visual interest
+
+Paragraphs (p):
+    Find: <p>Synesthesia visualizes your music...</p>
+    Change to: <p>Your new paragraph text here.</p>
+
+List Items (li):
+    Find: <li><strong>Step 1:</strong> Open Audio MIDI Setup</li>
+    Change to: <li><strong>Step 1:</strong> Your new instruction</li>
+    
+    Note: <strong> makes text bold, it's optional
+
+Buttons:
+    Find: <a href="..." class="launch-btn">Launch →</a>
+    Change text: <a href="..." class="launch-btn">Open Now →</a>
+    Change link: <a href="https://your-link.com" class="launch-btn">Launch →</a>
+
+
+EXAMPLE - EDITING "HOW IT WORKS" SECTION:
+
+Location: Around line 924
+
+Original:
+    <div class="info-box">
+        <h4>🎹 MIDI Setup</h4>
+        <p>Synesthesia visualizes your music in real-time by connecting to MIDI data:</p>
+        <ul>
+            <li><strong>Step 1:</strong> Open Audio MIDI Setup on your Mac</li>
+            <li><strong>Step 2:</strong> Create IAC buses</li>
+        </ul>
+    </div>
+
+Changed:
+    <div class="info-box">
+        <h4>🎵 Quick Start Guide</h4>
+        <p>Get started with your visualizer in just a few steps:</p>
+        <ul>
+            <li><strong>First:</strong> Download the software</li>
+            <li><strong>Next:</strong> Configure your settings</li>
+        </ul>
+    </div>
+
+
+6. QUICK SEARCH TIPS
+=====================
+
+To find and edit text efficiently:
+
+STEP 1: Open the HTML file
+    - Use a text editor: VS Code, Sublime Text, Notepad++, or even Notepad
+    - Right-click the file → Open With → Choose your editor
+
+STEP 2: Use Find/Search
+    - Windows: Press Ctrl+F
+    - Mac: Press Cmd+F
+    - A search box will appear
+
+STEP 3: Search for specific text
+    - Type the exact text you want to change
+    - Hit Enter to jump to that location
+    - Press F3 (or Cmd+G on Mac) to find next occurrence
+
+STEP 4: Make your changes
+    - Edit the text between the HTML tags
+    - Don't delete or modify the tags themselves (< > / =)
+
+STEP 5: Save and test
+    - Save the file (Ctrl+S or Cmd+S)
+    - Refresh your browser (F5 or Cmd+R)
+    - Check your changes
+
+SEARCH EXAMPLES:
+    Want to change "Welcome"? Search for: drawWaveformText('titleWave1'
+    Want to change subtitle? Search for: class="subtitle"
+    Want to change "Demo" folder? Search for: <h3>Demo</h3>
+    Want to change footer? Search for: class="footer"
+
+
+7. COMMON TEXT LOCATIONS REFERENCE
+===================================
+
+Quick reference table for the most commonly edited sections:
+
+ELEMENT                 | SEARCH FOR                           | APPROX LINE
+------------------------|--------------------------------------|-------------
+Main Title Line 1       | drawWaveformText('titleWave1'        | 1620
+Main Title Line 2       | drawWaveformText('titleWave2'        | 1621
+Main Title Line 3       | drawWaveformText('titleWave3'        | 1622
+Subtitle                | class="subtitle"                     | 885
+Hero Description        | class="hero-description"             | 886
+Folder: How it works    | <h3>How it works!</h3>              | 892
+Folder: Demo            | <h3>Demo</h3>                        | 895
+Folder: Versions        | <h3>Versions</h3>                    | 898
+Folder: Updates         | <h3>Updates</h3>                     | 901
+Folder: User templates  | <h3>User templates</h3>             | 904
+Folder: Resources       | <h3>Resources</h3>                   | 907
+Folder: Settings        | <h3>Settings</h3>                    | 910
+Folder: Tutorials       | <h3>Tutorials</h3>                   | 913
+How It Works Section    | <div id="howItWorks"                 | 924
+Demo Section            | <div id="demo"                       | 970
+Versions Section        | <div id="versions"                   | 995
+Updates Section         | <div id="updates"                    | 1045
+Templates Section       | <div id="templates"                  | 1105
+Resources Section       | <div id="resources"                  | 1135
+Settings Section        | <div id="settings"                   | 1203
+Tutorials Section       | <div id="tutorials"                  | 1233
+Footer                  | class="footer"                       | 1315
+
+Note: Line numbers are approximate and may shift as you edit the file.
+
+
+8. PRO TIPS & BEST PRACTICES
+=============================
+
+BEFORE YOU START:
+✅ Make a backup copy of your HTML file
+✅ Name it something like "synesthesia-landing-backup.html"
+✅ Store it in a safe location
+
+WHILE EDITING:
+✅ Change text between tags, not the tags themselves
+✅ Keep opening and closing tags matched
+✅ Don't delete < > / = " ' symbols unless you know what they do
+✅ Save frequently (Ctrl+S / Cmd+S)
+✅ Test in browser after each major change
+
+HTML TAG BASICS:
+✅ <p>Text here</p> = Paragraph
+✅ <h3>Text here</h3> = Small heading
+✅ <h4>Text here</h4> = Smaller heading
+✅ <strong>Text</strong> = Bold text
+✅ <li>Text here</li> = List item
+✅ <a href="...">Text</a> = Link
+
+COMMON MISTAKES TO AVOID:
+❌ Deleting closing tags (</p>, </div>, </h3>, etc.)
+❌ Forgetting to close quotes: onclick="showSection('demo')
+❌ Changing text inside onclick="" or class="" attributes
+❌ Using unsupported letters in waveform text
+❌ Making folder names too long
+
+TESTING YOUR CHANGES:
+1. Save the HTML file
+2. Open (or refresh) in your browser
+3. Check all sections still work
+4. Click each folder to verify it opens correctly
+5. If something breaks, undo your last change
+
+USING FIND & REPLACE:
+- Most editors have Find & Replace (Ctrl+H / Cmd+Option+F)
+- Useful for changing repeated text throughout the file
+- Be careful - preview changes before replacing all!
+
+RECOMMENDED TEXT EDITORS:
+FREE OPTIONS:
+- VS Code (https://code.visualstudio.com/) - Best for beginners
+- Notepad++ (Windows only) - Simple and fast
+- Sublime Text - Fast and lightweight
+- Atom - User-friendly
+
+PAID OPTIONS:
+- Sublime Text (free trial, $99 license)
+- PhpStorm / WebStorm - Professional tools
+
+
+GETTING HELP:
+=============
+
+If something breaks:
+1. Check the browser console for errors (F12 → Console tab)
+2. Restore from your backup
+3. Try making smaller changes one at a time
+4. Verify all quotes and brackets are matched
+
+Common error messages:
+- "Unexpected token" = You have a missing or extra bracket/quote
+- "undefined is not a function" = You changed something in a script section
+- Nothing displays = Check if you accidentally deleted a closing tag
+
+
+EXAMPLES OF COMPLETE EDITS:
+============================
+
+EXAMPLE 1: Changing the entire header
+
+BEFORE:
+    drawWaveformText('titleWave1', 'Welcome', false);
+    drawWaveformText('titleWave2', 'To', true);
+    drawWaveformText('titleWave3', 'Synesthesia', false);
+    
+    <p class="subtitle">MIDI Visualizer Collection</p>
+    
+    <p class="hero-description">
+        Transform your music into mesmerizing visual art.
+    </p>
+
+AFTER:
+    drawWaveformText('titleWave1', 'Music', false);
+    drawWaveformText('titleWave2', 'in', true);
+    drawWaveformText('titleWave3', 'Motion', false);
+    
+    <p class="subtitle">Visual Audio Experience</p>
+    
+    <p class="hero-description">
+        See your sound come alive with real-time visualization.
+    </p>
+
+
+EXAMPLE 2: Customizing a folder name and its section
+
+Folder name (line ~910):
+BEFORE:
+    <div class="nav-card" onclick="showSection('settings')">
+        <h3>Settings</h3>
+    </div>
+
+AFTER:
+    <div class="nav-card" onclick="showSection('settings')">
+        <h3>Preferences</h3>
+    </div>
+
+Section header (line ~1205):
+BEFORE:
+    <div class="section-header">
+        <button class="back-btn" onclick="showSection('landing')">← Back</button>
+        <h2>Settings</h2>
+    </div>
+
+AFTER:
+    <div class="section-header">
+        <button class="back-btn" onclick="showSection('landing')">← Back</button>
+        <h2>Preferences</h2>
+    </div>
+
+
+FINAL CHECKLIST:
+================
+
+Before you finish editing:
+☐ All text looks correct in the browser
+☐ All folders/buttons still work when clicked
+☐ No error messages in browser console (F12)
+☐ Text fits nicely without overflow
+☐ Special characters and emojis display correctly
+☐ Links go to the correct destinations
+☐ Backup file saved in safe location
+
+
+HAPPY EDITING!
+==============
+
+Remember: Start with small changes, test frequently, and always keep a backup!
+
+If you make a mistake, don't panic - just restore from your backup and try again.
+
+The more you practice, the more comfortable you'll become with editing HTML.

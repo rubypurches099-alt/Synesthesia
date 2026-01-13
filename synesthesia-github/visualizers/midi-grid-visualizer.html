@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton's Chromatic Grid - MIDI Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Monaco', 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #grid-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            z-index: 100;
+        }
+
+        #info h3 {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #0f0;
+        }
+
+        #device-list {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+        }
+
+        .device {
+            color: #0f0;
+            margin: 3px 0;
+        }
+
+        #toggle-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            z-index: 100;
+        }
+
+        #toggle-info:hover {
+            background: rgba(50, 50, 50, 0.9);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="grid-canvas"></canvas>
+    
+    <button id="toggle-info" onclick="toggleInfo()">ℹ️ Info</button>
+    
+    <div id="info">
+        <h3>Newton's Chromatic Grid</h3>
+        <div>Listening to all MIDI devices automatically</div>
+        <div id="device-list"></div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
+            <div>Active notes: <span id="note-count">0</span></div>
+            <div style="font-size: 10px; opacity: 0.6; margin-top: 5px;">
+                Press F11 for fullscreen
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // NEWTON'S CHROMATIC COLOR ENGINE - EXACT MAPPING
+        // ============================================================================
+
+        const PITCH_CLASSES = [
+            { name: 'C', semitone: 0 },
+            { name: 'C#', semitone: 1 },
+            { name: 'D', semitone: 2 },
+            { name: 'D#', semitone: 3 },
+            { name: 'E', semitone: 4 },
+            { name: 'F', semitone: 5 },
+            { name: 'F#', semitone: 6 },
+            { name: 'G', semitone: 7 },
+            { name: 'G#', semitone: 8 },
+            { name: 'A', semitone: 9 },
+            { name: 'A#', semitone: 10 },
+            { name: 'B', semitone: 11 }
+        ];
+
+        // Exact color mapping from spreadsheet - using hex values directly
+        const EXACT_COLORS = [
+            // MIDI 0-11 (Octave -1): Black
+            {r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},
+            {r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},{r:0,g:0,b:0},
+            // MIDI 12-23 (Octave 0): C0-B0
+            {r:0x4C,g:0x00,b:0x4C},{r:0x69,g:0x00,b:0xD2},{r:0x00,g:0x00,b:0xFF},{r:0x00,g:0x99,b:0xFF},{r:0x00,g:0xFF,b:0x00},
+            {r:0x6D,g:0xFF,b:0x00},{r:0xDB,g:0xFF,b:0x00},{r:0xFF,g:0xB1,b:0x00},{r:0xFF,g:0x3B,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xFF,g:0x00,b:0x00},{r:0xB8,g:0x00,b:0x00},
+            // MIDI 24-35 (Octave 1): C1-B1
+            {r:0x55,g:0x00,b:0x5A},{r:0x65,g:0x00,b:0xE0},{r:0x00,g:0x0F,b:0xFF},{r:0x00,g:0xAD,b:0xFF},{r:0x0B,g:0xFF,b:0x00},
+            {r:0x78,g:0xFF,b:0x00},{r:0xE6,g:0xFF,b:0x00},{r:0xFF,g:0xA5,b:0x00},{r:0xFF,g:0x2F,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xFF,g:0x00,b:0x00},{r:0xAD,g:0x00,b:0x00},
+            // MIDI 36-47 (Octave 2): C2-B2
+            {r:0x5D,g:0x00,b:0x67},{r:0x5F,g:0x00,b:0xED},{r:0x00,g:0x1F,b:0xFF},{r:0x00,g:0xC2,b:0xFF},{r:0x16,g:0xFF,b:0x00},
+            {r:0x83,g:0xFF,b:0x00},{r:0xF0,g:0xFF,b:0x00},{r:0xFF,g:0x99,b:0x00},{r:0xFF,g:0x23,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xFF,g:0x00,b:0x00},{r:0xA2,g:0x00,b:0x00},
+            // MIDI 48-59 (Octave 3): C3-B3
+            {r:0x63,g:0x00,b:0x75},{r:0x58,g:0x00,b:0xFB},{r:0x00,g:0x2E,b:0xFF},{r:0x00,g:0xD6,b:0xFF},{r:0x21,g:0xFF,b:0x00},
+            {r:0x8E,g:0xFF,b:0x00},{r:0xFB,g:0xFF,b:0x00},{r:0xFF,g:0x8D,b:0x00},{r:0xFF,g:0x18,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xFF,g:0x00,b:0x00},{r:0x97,g:0x00,b:0x00},
+            // MIDI 60-71 (Octave 4): C4-B4
+            {r:0x68,g:0x00,b:0x82},{r:0x4C,g:0x00,b:0xFF},{r:0x00,g:0x3D,b:0xFF},{r:0x00,g:0xEB,b:0xFF},{r:0x2C,g:0xFF,b:0x00},
+            {r:0x99,g:0xFF,b:0x00},{r:0xFF,g:0xF7,b:0x00},{r:0xFF,g:0x81,b:0x00},{r:0xFF,g:0x0C,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xF8,g:0x00,b:0x00},{r:0x8D,g:0x00,b:0x00},
+            // MIDI 72-83 (Octave 5): C5-B5
+            {r:0x6C,g:0x00,b:0x8F},{r:0x40,g:0x00,b:0xFF},{r:0x00,g:0x4C,b:0xFF},{r:0x00,g:0xFF,b:0xFF},{r:0x37,g:0xFF,b:0x00},
+            {r:0xA4,g:0xFF,b:0x00},{r:0xFF,g:0xEB,b:0x00},{r:0xFF,g:0x76,b:0x00},{r:0xFF,g:0x00,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xED,g:0x00,b:0x00},{r:0x82,g:0x00,b:0x00},
+            // MIDI 84-95 (Octave 6): C6-B6
+            {r:0x6E,g:0x00,b:0x9D},{r:0x33,g:0x00,b:0xFF},{r:0x00,g:0x5C,b:0xFF},{r:0x00,g:0xFF,b:0xCC},{r:0x42,g:0xFF,b:0x00},
+            {r:0xAF,g:0xFF,b:0x00},{r:0xFF,g:0xE0,b:0x00},{r:0xFF,g:0x6A,b:0x00},{r:0xFF,g:0x00,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xE2,g:0x00,b:0x00},{r:0x77,g:0x00,b:0x00},
+            // MIDI 96-107 (Octave 7): C7-B7
+            {r:0x6F,g:0x00,b:0xAA},{r:0x26,g:0x00,b:0xFF},{r:0x00,g:0x6B,b:0xFF},{r:0x00,g:0xFF,b:0x99},{r:0x4C,g:0xFF,b:0x00},
+            {r:0xBA,g:0xFF,b:0x00},{r:0xFF,g:0xD4,b:0x00},{r:0xFF,g:0x5E,b:0x00},{r:0xFF,g:0x00,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xD8,g:0x00,b:0x00},{r:0x6D,g:0x00,b:0x00},
+            // MIDI 108-119 (Octave 8): C8-B8
+            {r:0x6E,g:0x00,b:0xB8},{r:0x1A,g:0x00,b:0xFF},{r:0x00,g:0x7A,b:0xFF},{r:0x00,g:0xFF,b:0x66},{r:0x57,g:0xFF,b:0x00},
+            {r:0xC5,g:0xFF,b:0x00},{r:0xFF,g:0xC8,b:0x00},{r:0xFF,g:0x52,b:0x00},{r:0xFF,g:0x00,b:0x00},{r:0xFF,g:0x00,b:0x00},
+            {r:0xCD,g:0x00,b:0x00},{r:0x62,g:0x00,b:0x00},
+            // MIDI 120-127 (Octave 9): C9-G9
+            {r:0x6C,g:0x00,b:0xC5},{r:0x0D,g:0x00,b:0xFF},{r:0x00,g:0x8A,b:0xFF},{r:0x00,g:0xFF,b:0x33},{r:0x62,g:0xFF,b:0x00},
+            {r:0xD0,g:0xFF,b:0x00},{r:0xFF,g:0xBC,b:0x00},{r:0xFF,g:0x47,b:0x00}
+        ];
+
+        class ColorEngine {
+            constructor() {
+                this.colorTable = new Map();
+                this.generateColorTable();
+            }
+
+            getColor(midiNote) {
+                return this.colorTable.get(midiNote) || { r: 0, g: 0, b: 0, hex: '#000000' };
+            }
+
+            getNoteName(midiNote) {
+                const pitchClass = midiNote % 12;
+                const octave = Math.floor(midiNote / 12) - 1;
+                return `${PITCH_CLASSES[pitchClass].name}${octave}`;
+            }
+
+            generateColorTable() {
+                for (let midiNote = 0; midiNote <= 127; midiNote++) {
+                    const color = EXACT_COLORS[midiNote];
+                    const hex = `#${color.r.toString(16).padStart(2, '0')}${color.g.toString(16).padStart(2, '0')}${color.b.toString(16).padStart(2, '0')}`;
+                    this.colorTable.set(midiNote, { ...color, hex });
+                }
+            }
+        }
+
+        const colorEngine = new ColorEngine();
+
+        // ============================================================================
+        // CHROMATIC GRID VISUALIZER
+        // ============================================================================
+
+        class ChromaticGridVisualizer {
+            constructor() {
+                this.canvas = document.getElementById('grid-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.midiAccess = null;
+                this.devices = [];
+                
+                // Grid layout: 12 columns (C through B), 11 rows (octaves 0-10)
+                this.cols = 12; // Pitch classes
+                this.rows = 11; // Octaves
+                
+                // Active notes: Map<midiNote, {velocity, startTime, releaseTime}>
+                this.activeNotes = new Map();
+                this.decayTime = 400; // Fast decay for grid
+                
+                this.init();
+            }
+
+            async init() {
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // Request MIDI access - listen to ALL inputs automatically
+                if (navigator.requestMIDIAccess) {
+                    try {
+                        this.midiAccess = await navigator.requestMIDIAccess();
+                        this.setupAllMIDIInputs();
+                        this.midiAccess.onstatechange = () => this.setupAllMIDIInputs();
+                        console.log('✅ MIDI access granted - listening to all devices');
+                    } catch (err) {
+                        alert('MIDI access denied. Please allow MIDI access in your browser.');
+                    }
+                } else {
+                    alert('Web MIDI API not supported. Please use Chrome, Edge, or Opera.');
+                }
+
+                this.animate();
+            }
+
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                
+                // Calculate cell dimensions
+                this.cellWidth = this.canvas.width / this.cols;
+                this.cellHeight = this.canvas.height / this.rows;
+            }
+
+            setupAllMIDIInputs() {
+                this.devices = [];
+                const deviceList = document.getElementById('device-list');
+                deviceList.innerHTML = '';
+                
+                this.midiAccess.inputs.forEach(input => {
+                    this.devices.push({ id: input.id, name: input.name || 'Unknown Device' });
+                    input.onmidimessage = (message) => this.handleMIDIMessage(message);
+                    
+                    const div = document.createElement('div');
+                    div.className = 'device';
+                    div.textContent = `🎵 ${input.name}`;
+                    deviceList.appendChild(div);
+                    
+                    console.log(`🎵 Listening to: ${input.name}`);
+                });
+                
+                if (this.devices.length === 0) {
+                    deviceList.innerHTML = '<div style="color: #f00;">No MIDI devices detected</div>';
+                }
+                
+                console.log(`📡 Total MIDI devices: ${this.devices.length}`);
+            }
+
+            handleMIDIMessage(message) {
+                const [status, note, velocity] = message.data;
+                const command = status & 0xf0;
+
+                if (command === 0x90 && velocity > 0) {
+                    this.handleNoteOn(note, velocity);
+                } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
+                    this.handleNoteOff(note);
+                }
+            }
+
+            handleNoteOn(midiNote, velocity) {
+                this.activeNotes.set(midiNote, {
+                    velocity,
+                    startTime: performance.now(),
+                    releaseTime: null
+                });
+                
+                this.updateNoteCount();
+            }
+
+            handleNoteOff(midiNote) {
+                const note = this.activeNotes.get(midiNote);
+                if (note) {
+                    note.releaseTime = performance.now();
+                }
+            }
+
+            updateNoteCount() {
+                document.getElementById('note-count').textContent = this.activeNotes.size;
+            }
+
+            drawGrid() {
+                const ctx = this.ctx;
+                const now = performance.now();
+                
+                // Clear canvas
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid cells
+                for (let octave = 0; octave < this.rows; octave++) {
+                    for (let pitchClass = 0; pitchClass < this.cols; pitchClass++) {
+                        const midiNote = (octave + 1) * 12 + pitchClass; // Octave -1 to 9 (MIDI 0-127)
+                        
+                        if (midiNote > 127) continue;
+                        
+                        const x = pitchClass * this.cellWidth;
+                        const y = octave * this.cellHeight;
+                        
+                        const color = colorEngine.getColor(midiNote);
+                        const note = this.activeNotes.get(midiNote);
+                        
+                        let brightness = 0;
+                        let shouldDelete = false;
+                        
+                        if (note) {
+                            if (note.releaseTime) {
+                                // Fading out
+                                const elapsed = now - note.releaseTime;
+                                brightness = Math.max(0, 1 - elapsed / this.decayTime);
+                                
+                                if (brightness <= 0) {
+                                    shouldDelete = true;
+                                }
+                            } else {
+                                // Active note - brightness based on velocity
+                                brightness = 0.3 + (note.velocity / 127) * 0.7;
+                            }
+                        }
+                        
+                        if (shouldDelete) {
+                            setTimeout(() => {
+                                this.activeNotes.delete(midiNote);
+                                this.updateNoteCount();
+                            }, 0);
+                        }
+                        
+                        // Draw cell background
+                        if (brightness > 0) {
+                            // Active - show color
+                            ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${brightness})`;
+                        } else {
+                            // Inactive - very dark
+                            ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.05)`;
+                        }
+                        
+                        ctx.fillRect(x + 1, y + 1, this.cellWidth - 2, this.cellHeight - 2);
+                        
+                        // Draw note label if cell is large enough
+                        if (this.cellWidth > 60 && this.cellHeight > 40) {
+                            const noteName = colorEngine.getNoteName(midiNote);
+                            ctx.fillStyle = brightness > 0.4 ? '#000' : '#666';
+                            ctx.font = `${Math.min(this.cellHeight * 0.25, 16)}px monospace`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(noteName, x + this.cellWidth / 2, y + this.cellHeight / 2);
+                        }
+                    }
+                }
+                
+                // Draw octave labels (left side)
+                if (this.canvas.width > 800) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '14px monospace';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    for (let octave = 0; octave < this.rows; octave++) {
+                        ctx.fillText(`OCT ${octave}`, 45, octave * this.cellHeight + this.cellHeight / 2);
+                    }
+                }
+                
+                // Draw pitch class labels (top)
+                if (this.canvas.height > 600) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '14px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    for (let i = 0; i < this.cols; i++) {
+                        ctx.fillText(PITCH_CLASSES[i].name, i * this.cellWidth + this.cellWidth / 2, 20);
+                    }
+                }
+            }
+
+            animate() {
+                this.drawGrid();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize
+        const visualizer = new ChromaticGridVisualizer();
+
+        // Info toggle
+        let infoVisible = true;
+        function toggleInfo() {
+            infoVisible = !infoVisible;
+            document.getElementById('info').classList.toggle('hidden', !infoVisible);
+            document.getElementById('toggle-info').textContent = infoVisible ? 'ℹ️ Info' : 'ℹ️ Show Info';
+        }
+
+        // F11 hint
+        console.log('Press F11 for fullscreen mode');
+    </script>
+</body>
+</html>

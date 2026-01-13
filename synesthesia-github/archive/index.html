@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synesthesia - Archive Browser</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at top, #1e3a8a 0%, #000 50%);
+            opacity: 0.6;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 40px 20px;
+        }
+        
+        h1 {
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3a86ff, #8338ec);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(58, 134, 255, 0.2);
+            color: #3a86ff;
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .back-btn:hover {
+            background: rgba(58, 134, 255, 0.3);
+            border-color: rgba(58, 134, 255, 0.6);
+        }
+        
+        .category {
+            margin-bottom: 50px;
+            background: rgba(20, 20, 40, 0.6);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+        }
+        
+        .category h2 {
+            color: #3a86ff;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .category p {
+            color: #aaa;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .file-link {
+            display: block;
+            padding: 15px 20px;
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .file-link:hover {
+            background: rgba(58, 134, 255, 0.2);
+            border-color: rgba(58, 134, 255, 0.6);
+            transform: translateX(5px);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(131, 56, 236, 0.3);
+            color: #b388ff;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <div class="container">
+        <a href="../index.html" class="back-btn">← Back to Main</a>
+        
+        <header>
+            <h1>Archive Browser</h1>
+            <p style="color: #aaa; font-size: 18px;">Browse all historical versions and experimental builds</p>
+        </header>
+        
+        <!-- Style Variations -->
+        <div class="category">
+            <h2>Style Variations</h2>
+            <p>Alternative visual themes and aesthetics</p>
+            <div class="file-grid">
+                <a href="styles/newton-midi-synthwave.html" class="file-link" target="_blank">
+                    Retro Synthwave <span class="badge">80s Theme</span>
+                </a>
+                <a href="styles/newton-midi-kandinsky.html" class="file-link" target="_blank">
+                    Kandinsky <span class="badge">Abstract</span>
+                </a>
+                <a href="styles/newton-midi-minimal.html" class="file-link" target="_blank">
+                    Minimal Monochrome <span class="badge">B&W</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Oscilloscope Versions -->
+        <div class="category">
+            <h2>Oscilloscope Versions</h2>
+            <p>Waveform visualizer development history</p>
+            <div class="file-grid">
+                <a href="oscilloscope/newton-midi-oscilloscope (2).html" class="file-link" target="_blank">
+                    Oscilloscope v2 <span class="badge">Latest</span>
+                </a>
+                <a href="oscilloscope/newton-midi-oscilloscope (1).html" class="file-link" target="_blank">
+                    Oscilloscope v1
+                </a>
+                <a href="oscilloscope/newton-midi-oscilloscope.html" class="file-link" target="_blank">
+                    Oscilloscope Original
+                </a>
+            </div>
+        </div>
+        
+        <!-- Multitrack Development -->
+        <div class="category">
+            <h2>Multitrack Development (v1-27)</h2>
+            <p>Complete development history from initial prototype to final version</p>
+            <div class="file-grid" id="multitrack-grid">
+                <!-- Generated dynamically below -->
+            </div>
+        </div>
+        
+        <!-- Basic Versions -->
+        <div class="category">
+            <h2>Basic Versions</h2>
+            <p>Early standalone prototypes and development builds</p>
+            <div class="file-grid">
+                <a href="basic/newton-midi-standalone (2).html" class="file-link" target="_blank">
+                    Standalone v2
+                </a>
+                <a href="basic/newton-midi-standalone (1).html" class="file-link" target="_blank">
+                    Standalone v1
+                </a>
+                <a href="basic/newton-midi-standalone.html" class="file-link" target="_blank">
+                    Standalone Original
+                </a>
+            </div>
+        </div>
+        
+        <!-- Landing Pages -->
+        <div class="category">
+            <h2>Landing Page Iterations</h2>
+            <p>All landing page design and feature iterations</p>
+            <div class="file-grid" id="landing-grid">
+                <!-- Generated dynamically below -->
+            </div>
+        </div>
+        
+        <footer>
+            <p>The Sound Of Colour - Ruby Purches</p>
+            <p style="margin-top: 10px; color: #444;">Complete Archive</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Generate multitrack links (v27 down to v1)
+        const multitrackGrid = document.getElementById('multitrack-grid');
+        for (let i = 27; i >= 1; i--) {
+            const link = document.createElement('a');
+            link.href = `multitrack/newton-midi-multitrack (${i}).html`;
+            link.className = 'file-link';
+            link.target = '_blank';
+            link.innerHTML = `Multitrack v${i}`;
+            if (i === 27) {
+                link.innerHTML += ' <span class="badge">Latest</span>';
+            }
+            multitrackGrid.appendChild(link);
+        }
+        
+        // Add original multitrack
+        const originalLink = document.createElement('a');
+        originalLink.href = 'multitrack/newton-midi-multitrack.html';
+        originalLink.className = 'file-link';
+        originalLink.target = '_blank';
+        originalLink.innerHTML = 'Multitrack Original <span class="badge">First</span>';
+        multitrackGrid.appendChild(originalLink);
+        
+        // Landing page files
+        const landingPages = [
+            'synesthesia-landing-enhanced-versions.html',
+            'synesthesia-landing-enhanced-versions (1).html',
+            'synesthesia-landing-full-edit.html',
+            'synesthesia-landing-click-to-edit.html',
+            'synesthesia-landing-with-admin.html',
+            'synesthesia-landing-with-settings.html',
+            'synesthesia-landing-final.html',
+            'synesthesia-landing-mini.html',
+            'synesthesia-landing-compact.html',
+            'synesthesia-landing-retro-with-size.html',
+            'synesthesia-landing-with-font-selector.html',
+            'synesthesia-landing-v2.html',
+            'synesthesia-landing (1).html',
+            'synesthesia-landing (2).html',
+            'synesthesia-landing (3).html',
+            'synesthesia-landing (4).html',
+            'synesthesia-landing.html',
+            'synesthesia-landing-updated.html',
+            'synesthesia-landing-updated (1).html',
+            'synesthesia-landing-updated (2).html',
+            'synesthesia-landing-updated (3).html',
+            'synesthesia-landing-updated (4).html'
+        ];
+        
+        const landingGrid = document.getElementById('landing-grid');
+        landingPages.forEach((filename, index) => {
+            const link = document.createElement('a');
+            link.href = `landing-pages/${filename}`;
+            link.className = 'file-link';
+            link.target = '_blank';
+            const displayName = filename.replace('synesthesia-landing-', '').replace('.html', '').replace(/-/g, ' ');
+            link.textContent = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+            if (index === 0) {
+                link.innerHTML += ' <span class="badge">Latest</span>';
+            }
+            landingGrid.appendChild(link);
+        });
+    </script>
+</body>
+</html>

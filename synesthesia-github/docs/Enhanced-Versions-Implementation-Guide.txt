@@ -1,0 +1,487 @@
+ENHANCED VERSIONS SECTION - IMPLEMENTATION GUIDE
+================================================
+
+This guide shows you how to upgrade your Versions section with:
+✅ Collapsible category groups
+✅ Image previews for each visualizer  
+✅ Feature tags
+✅ Better organization
+✅ Upload section for custom versions
+
+═══════════════════════════════════════════════════════════
+
+STEP 1: ADD CSS STYLES
+=======================
+
+Location: Inside the <style> tag (around line 900, after the existing styles)
+
+Copy and paste this entire block BEFORE the closing </style> tag:
+
+```css
+/* Enhanced Versions Section Styles */
+.version-category {
+    margin-bottom: 30px;
+    border: 2px solid rgba(58, 134, 255, 0.2);
+    border-radius: 15px;
+    overflow: hidden;
+    background: rgba(20, 20, 30, 0.4);
+}
+
+.category-header {
+    padding: 20px 25px;
+    background: rgba(58, 134, 255, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid rgba(58, 134, 255, 0.2);
+}
+
+.category-header:hover {
+    background: rgba(58, 134, 255, 0.15);
+}
+
+.category-header h3 {
+    font-size: 22px;
+    color: #3a86ff;
+    margin: 0;
+    font-weight: 600;
+}
+
+.category-count {
+    font-size: 14px;
+    color: #888;
+    margin-left: auto;
+    margin-right: 20px;
+}
+
+.category-toggle {
+    font-size: 18px;
+    color: #3a86ff;
+    transition: transform 0.3s ease;
+}
+
+.category-header.collapsed .category-toggle {
+    transform: rotate(-90deg);
+}
+
+.category-content {
+    padding: 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.5s ease, padding 0.5s ease;
+}
+
+.category-content.collapsed {
+    max-height: 0;
+    padding: 0 25px;
+}
+
+.version-card-enhanced {
+    background: rgba(20, 20, 30, 0.8);
+    border: 2px solid rgba(58, 134, 255, 0.2);
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.version-card-enhanced:hover {
+    border-color: rgba(58, 134, 255, 0.5);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(58, 134, 255, 0.3);
+}
+
+.version-image-container {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    background: #111;
+}
+
+.version-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.version-card-enhanced:hover .version-image {
+    transform: scale(1.05);
+}
+
+.version-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.version-badge-enhanced {
+    background: rgba(20, 20, 30, 0.9);
+    color: #3a86ff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(58, 134, 255, 0.3);
+}
+
+.version-badge-enhanced.core {
+    background: rgba(58, 134, 255, 0.3);
+    border-color: rgba(58, 134, 255, 0.6);
+}
+
+.version-badge-enhanced.style {
+    background: rgba(131, 56, 236, 0.3);
+    color: #b388ff;
+    border-color: rgba(131, 56, 236, 0.6);
+}
+
+.version-badge-enhanced.technical {
+    background: rgba(100, 200, 100, 0.3);
+    color: #88ff88;
+    border-color: rgba(100, 200, 100, 0.6);
+}
+
+.version-info {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.version-info h4 {
+    font-size: 20px;
+    color: #fff;
+    margin: 0;
+}
+
+.version-description {
+    font-size: 14px;
+    color: #aaa;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.version-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.feature-tag {
+    background: rgba(58, 134, 255, 0.1);
+    color: #88bbff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    border: 1px solid rgba(58, 134, 255, 0.2);
+}
+
+.version-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.launch-btn-enhanced {
+    flex: 1;
+    background: linear-gradient(135deg, #3a86ff, #8338ec);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.launch-btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(58, 134, 255, 0.4);
+}
+
+.info-btn-enhanced {
+    background: rgba(58, 134, 255, 0.2);
+    color: #3a86ff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 2px solid rgba(58, 134, 255, 0.3);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.info-btn-enhanced:hover {
+    background: rgba(58, 134, 255, 0.3);
+    border-color: rgba(58, 134, 255, 0.5);
+}
+
+.upload-prompt {
+    text-align: center;
+    padding: 60px 40px;
+    background: rgba(58, 134, 255, 0.05);
+    border: 2px dashed rgba(58, 134, 255, 0.3);
+    border-radius: 15px;
+    grid-column: 1 / -1;
+}
+
+.upload-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.upload-prompt h4 {
+    font-size: 24px;
+    color: #3a86ff;
+    margin-bottom: 15px;
+}
+
+.upload-prompt p {
+    font-size: 16px;
+    color: #aaa;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.upload-prompt ol {
+    list-style-position: inside;
+    color: #ccc;
+}
+
+.upload-prompt li {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .category-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .category-header {
+        padding: 15px 20px;
+    }
+    
+    .category-header h3 {
+        font-size: 18px;
+    }
+    
+    .version-image-container {
+        height: 200px;
+    }
+}
+```
+
+═══════════════════════════════════════════════════════════
+
+STEP 2: ADD JAVASCRIPT FUNCTIONS
+=================================
+
+Location: Inside the <script> tag (around line 2500, after existing functions)
+
+Copy and paste this BEFORE the closing </script> tag:
+
+```javascript
+// Enhanced Versions - Category Toggle Function
+function toggleCategory(categoryId) {
+    const content = document.getElementById(categoryId + '-content');
+    const header = content.previousElementSibling;
+    
+    if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        header.classList.remove('collapsed');
+    } else {
+        content.classList.add('collapsed');
+        header.classList.add('collapsed');
+    }
+    
+    // Save state to localStorage
+    const collapsedCategories = JSON.parse(localStorage.getItem('collapsedCategories') || '{}');
+    collapsedCategories[categoryId] = content.classList.contains('collapsed');
+    localStorage.setItem('collapsedCategories', JSON.stringify(collapsedCategories));
+}
+
+// Load collapsed states on page load
+function loadCategoryStates() {
+    const collapsedCategories = JSON.parse(localStorage.getItem('collapsedCategories') || '{}');
+    
+    Object.keys(collapsedCategories).forEach(categoryId => {
+        if (collapsedCategories[categoryId]) {
+            const content = document.getElementById(categoryId + '-content');
+            const header = content?.previousElementSibling;
+            if (content && header) {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+        }
+    });
+}
+```
+
+Then FIND this line in your existing DOMContentLoaded event:
+```javascript
+window.addEventListener('DOMContentLoaded', () => {
+```
+
+And ADD this line near the end of that function (before the closing });):
+```javascript
+    // Load category states if on versions page
+    loadCategoryStates();
+```
+
+═══════════════════════════════════════════════════════════
+
+STEP 3: REPLACE THE VERSIONS SECTION HTML
+==========================================
+
+Location: Around line 1187 - Find <!-- Versions Section -->
+
+REPLACE everything from:
+    <!-- Versions Section -->
+TO:
+    <!-- Updates Section -->
+
+WITH the new enhanced HTML (see attached file: enhanced-versions-section.html)
+
+═══════════════════════════════════════════════════════════
+
+STEP 4: ADD YOUR VISUALIZER IMAGES
+===================================
+
+To add images for each visualizer:
+
+1. Take screenshots of each visualizer
+2. Save them as: 
+   - visualizer-original.jpg
+   - visualizer-oscilloscope.jpg
+   - visualizer-synthwave.jpg
+   - visualizer-kandinsky.jpg
+   - visualizer-minimal.jpg
+
+3. Place images in the same folder as your HTML file
+
+4. Update the image src in the HTML:
+   Change: src="placeholder-core-original.jpg"
+   To:     src="visualizer-original.jpg"
+
+═══════════════════════════════════════════════════════════
+
+STEP 5: ADD NEW VISUALIZERS
+============================
+
+To add your custom visualizers to the "Experimental & Custom" section:
+
+1. Copy one of the existing version-card-enhanced blocks
+2. Paste it in the "experimental-content" div
+3. Update:
+   - Image src
+   - Title (h4)
+   - Description
+   - Feature tags
+   - Launch button href
+
+Example template:
+```html
+<div class="version-card-enhanced">
+    <div class="version-image-container">
+        <img src="my-custom-visualizer.jpg" alt="My Visualizer" class="version-image"
+             onerror="this.src='data:image/svg+xml,%3Csvg...'">
+        <div class="version-badges">
+            <span class="version-badge-enhanced">Custom</span>
+            <span class="version-badge-enhanced">v1.0</span>
+        </div>
+    </div>
+    <div class="version-info">
+        <h4>My Custom Visualizer</h4>
+        <p class="version-description">Description of what makes this visualizer unique...</p>
+        <div class="version-features">
+            <span class="feature-tag">🎨 Feature 1</span>
+            <span class="feature-tag">✨ Feature 2</span>
+        </div>
+        <div class="version-actions">
+            <a href="my-visualizer.html" class="launch-btn-enhanced" target="_blank">Launch →</a>
+            <button class="info-btn-enhanced" onclick="alert('More info!')">ℹ️ Info</button>
+        </div>
+    </div>
+</div>
+```
+
+═══════════════════════════════════════════════════════════
+
+FEATURES OF THE NEW SYSTEM
+===========================
+
+✅ Collapsible Categories
+   - Click headers to expand/collapse
+   - State saved in localStorage
+   
+✅ Image Previews
+   - 250px tall preview images
+   - Zoom on hover
+   - Fallback placeholder if image missing
+
+✅ Better Organization
+   - Core Versions (2)
+   - Style Variations (3)
+   - Experimental & Custom (expandable)
+
+✅ Feature Tags
+   - Visual indicators of key features
+   - Color-coded badges
+
+✅ Enhanced Cards
+   - Larger, more informative
+   - Launch & Info buttons
+   - Hover effects
+
+✅ Upload Section
+   - Instructions for adding new versions
+   - Quick Edit Mode access
+
+═══════════════════════════════════════════════════════════
+
+TIPS & TRICKS
+=============
+
+Image Optimization:
+- Recommended size: 800x500px
+- Format: JPG or PNG
+- Keep file size under 200KB for fast loading
+
+Adding Categories:
+- Copy a version-category block
+- Give it a unique ID (e.g., "advanced-content")
+- Update the onclick to match: onclick="toggleCategory('advanced')"
+
+Color Coding:
+- Core versions: Blue
+- Style versions: Purple
+- Technical: Green
+- Custom: Use any color by adding a CSS class
+
+═══════════════════════════════════════════════════════════
+
+Need help? The three separate files contain all the code:
+1. enhanced-versions-styles.css - All CSS
+2. enhanced-versions-script.js - All JavaScript
+3. enhanced-versions-section.html - Complete HTML section
+
+Good luck! 🚀
