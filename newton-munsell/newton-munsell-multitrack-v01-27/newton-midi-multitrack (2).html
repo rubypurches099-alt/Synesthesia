@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton MIDI Visualizer - Multi-Track Lanes</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        const NewtonColorPiano = () => {
+          const [hoveredKey, setHoveredKey] = useState(null);
+          const [showInfo, setShowInfo] = useState(false);
+          const [showGuide, setShowGuide] = useState(false);
+          const [viewMode, setViewMode] = useState('lanes'); // 'lanes' or 'layers'
+          const [activeNotesByTrack, setActiveNotesByTrack] = useState({});
+          const [midiAccess, setMidiAccess] = useState(null);
+          const [midiConnected, setMidiConnected] = useState(false);
+          const [noteHistoryByTrack, setNoteHistoryByTrack] = useState({});
+          const [midiDevices, setMidiDevices] = useState([]);
+          const [debugInfo, setDebugInfo] = useState('');
+          const historyRefByTrack = useRef({});
+          
+          const newtonBaseColors = {
+            'C': { r: 148, g: 0, b: 211, name: 'Violet' },
+            'C#': { r: 204, g: 0, b: 102, name: 'Violet-Red' },
+            'D': { r: 255, g: 0, b: 0, name: 'Red' },
+            'D#': { r: 255, g: 69, b: 0, name: 'Red-Orange' },
+            'E': { r: 255, g: 140, b: 0, name: 'Orange' },
+            'F': { r: 255, g: 255, b: 0, name: 'Yellow' },
+            'F#': { r: 127, g: 255, b: 0, name: 'Yellow-Green' },
+            'G': { r: 0, g: 255, b: 0, name: 'Green' },
+            'G#': { r: 0, g: 128, b: 255, name: 'Green-Blue' },
+            'A': { r: 0, g: 0, b: 255, name: 'Blue' },
+            'A#': { r: 75, g: 0, b: 130, name: 'Indigo' },
+            'B': { r: 139, g: 0, b: 255, name: 'Indigo-Violet' }
+          };
+
+          const trackStyles = [
+            { blur: 4, opacity: 1.0, name: 'Track 1', color: 'bg-purple-900' },
+            { blur: 6, opacity: 0.85, name: 'Track 2', color: 'bg-blue-900' },
+            { blur: 8, opacity: 0.75, name: 'Track 3', color: 'bg-green-900' },
+            { blur: 10, opacity: 0.65, name: 'Track 4', color: 'bg-yellow-900' },
+            { blur: 12, opacity: 0.60, name: 'Track 5', color: 'bg-orange-900' },
+            { blur: 14, opacity: 0.55, name: 'Track 6', color: 'bg-red-900' }
+          ];
+
+          const getColorForOctave = (baseColor, octave, velocity = 127) => {
+            const brightness = octave / 10;
+            const saturation = velocity / 127;
+            
+            const r = Math.round(baseColor.r * brightness * saturation + 255 * (1 - saturation) * brightness);
+            const g = Math.round(baseColor.g * brightness * saturation + 255 * (1 - saturation) * brightness);
+            const b = Math.round(baseColor.b * brightness * saturation + 255 * (1 - saturation) * brightness);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+          };
+
+          const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+          const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+          const blackNotes = ['C#', 'D#', 'F#', 'G#', 'A#'];
+          
+          const getNoteFromMidi = (midiNumber, velocity = 127, trackIndex = 0) => {
+            const octave = Math.floor(midiNumber / 12) - 1;
+            const noteIndex = midiNumber % 12;
+            const baseNote = notes[noteIndex];
+            const baseColor = newtonBaseColors[baseNote];
+            return {
+              note: `${baseNote}${octave}`,
+              baseNote,
+              octave,
+              isBlack: blackNotes.includes(baseNote),
+              color: getColorForOctave(baseColor, octave, velocity),
+              colorName: baseColor.name,
+              midiNumber,
+              velocity,
+              trackIndex
+            };
+          };
+
+          useEffect(() => {
+            if (navigator.requestMIDIAccess) {
+              navigator.requestMIDIAccess({ sysex: false })
+                .then(access => {
+                  setMidiAccess(access);
+                  
+                  const inputs = Array.from(access.inputs.values());
+                  const devices = inputs.map((input, idx) => ({
+                    id: input.id,
+                    name: input.name,
+                    manufacturer: input.manufacturer,
+                    trackIndex: idx
+                  }));
+                  
+                  setMidiDevices(devices);
+                  setDebugInfo(`Found ${inputs.length} MIDI input(s)`);
+                  
+                  if (inputs.length > 0) {
+                    setMidiConnected(true);
+                    inputs.forEach((input, idx) => {
+                      console.log(`Connecting Track ${idx + 1}:`, input.name);
+                      input.onmidimessage = (message) => handleMIDIMessage(message, idx);
+                      
+                      // Initialize track data
+                      if (!historyRefByTrack.current[idx]) {
+                        historyRefByTrack.current[idx] = [];
+                      }
+                    });
+                  } else {
+                    setMidiConnected(false);
+                    setDebugInfo('No MIDI devices found. Please connect devices and refresh.');
+                  }
+
+                  access.onstatechange = (e) => {
+                    const input = e.port;
+                    if (input.type === 'input') {
+                      const newInputs = Array.from(access.inputs.values());
+                      const newDevices = newInputs.map((inp, idx) => ({
+                        id: inp.id,
+                        name: inp.name,
+                        manufacturer: inp.manufacturer,
+                        trackIndex: idx
+                      }));
+                      
+                      if (input.state === 'connected') {
+                        console.log('MIDI device connected:', input.name);
+                        const trackIdx = newInputs.indexOf(input);
+                        input.onmidimessage = (message) => handleMIDIMessage(message, trackIdx);
+                        if (!historyRefByTrack.current[trackIdx]) {
+                          historyRefByTrack.current[trackIdx] = [];
+                        }
+                        setDebugInfo(`Connected: ${input.name}`);
+                      } else if (input.state === 'disconnected') {
+                        console.log('MIDI device disconnected:', input.name);
+                        setDebugInfo('Device disconnected');
+                      }
+                      
+                      setMidiDevices(newDevices);
+                      setMidiConnected(newInputs.length > 0);
+                    }
+                  };
+                })
+                .catch(err => {
+                  console.error('MIDI access failed:', err);
+                  setMidiConnected(false);
+                  setDebugInfo(`MIDI Error: ${err.message}`);
+                });
+            } else {
+              setDebugInfo('Web MIDI API not supported in this browser');
+            }
+          }, []);
+
+          const handleMIDIMessage = (message, trackIndex) => {
+            const [command, note, velocity] = message.data;
+            
+            console.log(`Track ${trackIndex + 1} MIDI:`, { command, note, velocity });
+            
+            const isNoteOn = command >= 144 && command <= 159 && velocity > 0;
+            const isNoteOff = (command >= 128 && command <= 143) || (command >= 144 && command <= 159 && velocity === 0);
+            
+            if (isNoteOn) {
+              setActiveNotesByTrack(prev => ({
+                ...prev,
+                [trackIndex]: {
+                  ...(prev[trackIndex] || {}),
+                  [note]: velocity
+                }
+              }));
+              
+              const noteData = getNoteFromMidi(note, velocity, trackIndex);
+              const historyItem = {
+                ...noteData,
+                timestamp: Date.now(),
+                velocity,
+                trackIndex,
+                id: Math.random()
+              };
+              
+              if (!historyRefByTrack.current[trackIndex]) {
+                historyRefByTrack.current[trackIndex] = [];
+              }
+              
+              historyRefByTrack.current[trackIndex] = [
+                historyItem, 
+                ...historyRefByTrack.current[trackIndex]
+              ].slice(0, 50);
+              
+              setNoteHistoryByTrack({...historyRefByTrack.current});
+              
+            } else if (isNoteOff) {
+              setActiveNotesByTrack(prev => {
+                const newState = {...prev};
+                if (newState[trackIndex]) {
+                  const trackNotes = {...newState[trackIndex]};
+                  delete trackNotes[note];
+                  newState[trackIndex] = trackNotes;
+                }
+                return newState;
+              });
+            }
+          };
+
+          const generateKeysForTrack = (trackIndex) => {
+            const keys = [];
+            const trackNotes = activeNotesByTrack[trackIndex] || {};
+            
+            for (let octave = 0; octave <= 10; octave++) {
+              for (let i = 0; i < notes.length; i++) {
+                if (octave === 10 && i > 0) break;
+                const note = notes[i];
+                const noteName = `${note}${octave}`;
+                const baseColor = newtonBaseColors[note];
+                const midiNumber = (octave + 1) * 12 + i;
+                const velocity = trackNotes[midiNumber] || 127;
+                const isActive = trackNotes.hasOwnProperty(midiNumber);
+                
+                keys.push({
+                  note: noteName,
+                  baseNote: note,
+                  octave,
+                  isBlack: blackNotes.includes(note),
+                  color: getColorForOctave(baseColor, octave, velocity),
+                  colorName: baseColor.name,
+                  midiNumber,
+                  isActive,
+                  velocity
+                });
+              }
+            }
+            return keys;
+          };
+
+          useEffect(() => {
+            const interval = setInterval(() => {
+              const now = Date.now();
+              Object.keys(historyRefByTrack.current).forEach(trackIdx => {
+                historyRefByTrack.current[trackIdx] = historyRefByTrack.current[trackIdx].filter(
+                  item => now - item.timestamp < 3000
+                );
+              });
+              setNoteHistoryByTrack({...historyRefByTrack.current});
+            }, 100);
+            
+            return () => clearInterval(interval);
+          }, []);
+
+          const numTracks = midiDevices.length || 1;
+
+          return (
+            <div className="w-full h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 overflow-hidden flex flex-col">
+              <div className="mb-3 text-center">
+                <h1 className="text-3xl font-bold text-white mb-2">Newton MIDI - Multi-Track Lanes + Layers</h1>
+                <div className="flex items-center justify-center gap-3 text-sm mb-2 flex-wrap">
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${midiConnected ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}`}>
+                    <span>{midiConnected ? `✓ ${midiDevices.length} Track(s)` : '✗ MIDI Disconnected'}</span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setViewMode('lanes')}
+                      className={`px-3 py-1 rounded-lg transition-colors ${viewMode === 'lanes' ? 'bg-cyan-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                    >
+                      🎚️ Lanes
+                    </button>
+                    <button
+                      onClick={() => setViewMode('layers')}
+                      className={`px-3 py-1 rounded-lg transition-colors ${viewMode === 'layers' ? 'bg-cyan-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                    >
+                      🎭 Layers
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setShowGuide(!showGuide)}
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  >
+                    🎹 {showGuide ? 'Hide' : 'Show'} Guide
+                  </button>
+                  <button
+                    onClick={() => setShowInfo(!showInfo)}
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  >
+                    ℹ {showInfo ? 'Hide' : 'Show'} Tracks
+                  </button>
+                </div>
+                {debugInfo && (
+                  <div className="text-xs text-yellow-400 mb-1">{debugInfo}</div>
+                )}
+              </div>
+
+              {showInfo && midiDevices.length > 0 && (
+                <div className="bg-gray-800 rounded-lg p-3 mb-3 text-white text-xs max-w-4xl mx-auto">
+                  <h3 className="font-bold mb-2">Connected Tracks</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {midiDevices.map((device, idx) => (
+                      <div key={device.id} className={`flex items-center gap-2 ${trackStyles[idx]?.color || 'bg-gray-700'} rounded p-2`}>
+                        <div className="text-2xl">🎵</div>
+                        <div>
+                          <div className="font-bold">Track {idx + 1}</div>
+                          <div className="text-gray-300">{device.name}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {showGuide && (
+                <div className="bg-gray-800 rounded-lg p-4 mb-3 text-white text-xs max-w-3xl mx-auto max-h-64 overflow-y-auto">
+                  <h3 className="font-bold mb-3 text-center text-sm">Multi-Track Modes</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-700 p-3 rounded">
+                      <h4 className="font-bold mb-2">🎚️ Lanes Mode</h4>
+                      <p className="mb-2">Each track in its own horizontal lane with full Newton visualization</p>
+                      <p className="text-gray-400">Best for: Seeing exactly what each track plays</p>
+                    </div>
+                    <div className="bg-gray-700 p-3 rounded">
+                      <h4 className="font-bold mb-2">🎭 Layers Mode</h4>
+                      <p className="mb-2">All tracks combined with depth-based blur (front to back)</p>
+                      <p className="text-gray-400">Best for: Beautiful blended visuals</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {viewMode === 'lanes' ? (
+                // LANES MODE
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                  {Array.from({length: numTracks}, (_, trackIdx) => {
+                    const trackKeys = generateKeysForTrack(trackIdx);
+                    const whiteKeys = trackKeys.filter(k => !k.isBlack);
+                    const trackHistory = noteHistoryByTrack[trackIdx] || [];
+                    const device = midiDevices[trackIdx];
+                    
+                    return (
+                      <div key={trackIdx} className="mb-4 pb-4 border-b border-gray-700">
+                        <div className={`text-xs font-bold mb-2 px-2 py-1 rounded inline-block ${trackStyles[trackIdx]?.color || 'bg-gray-700'} text-white`}>
+                          Track {trackIdx + 1} {device ? `- ${device.name}` : ''}
+                        </div>
+                        
+                        <div className="relative" style={{ height: '120px' }}>
+                          {/* Visualization area for this track */}
+                          <div className="absolute inset-0">
+                            {trackHistory.map(item => {
+                              const age = Date.now() - item.timestamp;
+                              const progress = age / 3000;
+                              const yPos = progress * 100;
+                              const opacity = 1 - progress;
+                              const size = 15 + (item.velocity / 127) * 30;
+                              
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="absolute rounded-full"
+                                  style={{
+                                    left: `${(item.midiNumber / 127) * 100}%`,
+                                    top: `${yPos}%`,
+                                    width: `${size}px`,
+                                    height: `${size}px`,
+                                    backgroundColor: item.color,
+                                    opacity: opacity,
+                                    transform: 'translate(-50%, -50%)',
+                                    boxShadow: `0 0 ${size / 2}px ${item.color}`,
+                                    filter: 'blur(3px)',
+                                    transition: 'top 0.1s linear'
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Mini piano for this track */}
+                        <div className="overflow-hidden" style={{ height: '80px' }}>
+                          <div className="relative h-full w-full flex justify-center">
+                            <div className="flex h-full items-end" style={{ transform: 'scale(0.34)', transformOrigin: 'center bottom' }}>
+                              {whiteKeys.map((key) => (
+                                <div
+                                  key={key.note}
+                                  className={`relative border-r border-gray-700 transition-all ${
+                                    key.isActive ? 'brightness-150' : ''
+                                  }`}
+                                  style={{
+                                    width: '24px',
+                                    height: '70px',
+                                    backgroundColor: key.color,
+                                    boxShadow: key.isActive 
+                                      ? `0 0 10px ${key.color}` 
+                                      : '0 2px 3px rgba(0,0,0,0.3)',
+                                    borderRadius: '0 0 3px 3px'
+                                  }}
+                                >
+                                  {key.baseNote === 'C' && (
+                                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs font-bold text-white bg-black bg-opacity-50 px-1 rounded">
+                                      {key.octave}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+
+                              {/* Black keys for this mini piano */}
+                              <div className="absolute top-0 left-0 right-0 flex items-start">
+                                {trackKeys.map((key, idx) => {
+                                  if (!key.isBlack) return null;
+                                  const whiteKeysBefore = trackKeys.slice(0, idx).filter(k => !k.isBlack).length;
+                                  
+                                  return (
+                                    <div
+                                      key={key.note}
+                                      className={`absolute transition-all ${key.isActive ? 'brightness-150' : ''}`}
+                                      style={{
+                                        left: `${whiteKeysBefore * 24 + 17}px`,
+                                        width: '14px',
+                                        height: '45px',
+                                        backgroundColor: key.color,
+                                        boxShadow: key.isActive ? `0 0 10px ${key.color}` : '0 2px 4px rgba(0,0,0,0.5)',
+                                        borderRadius: '0 0 2px 2px',
+                                        border: '1px solid rgba(0,0,0,0.3)'
+                                      }}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                // LAYERS MODE
+                <>
+                  <div className="flex-1 relative overflow-hidden mb-3">
+                    <div className="absolute inset-0">
+                      {Object.entries(noteHistoryByTrack).map(([trackIdx, trackHistory]) => {
+                        const style = trackStyles[trackIdx] || trackStyles[0];
+                        return trackHistory.map(item => {
+                          const age = Date.now() - item.timestamp;
+                          const progress = age / 3000;
+                          const yPos = progress * 100;
+                          const opacity = (1 - progress) * style.opacity;
+                          const size = 20 + (item.velocity / 127) * 60;
+                          
+                          return (
+                            <div
+                              key={item.id}
+                              className="absolute rounded-full"
+                              style={{
+                                left: `${(item.midiNumber / 127) * 100}%`,
+                                top: `${yPos}%`,
+                                width: `${size}px`,
+                                height: `${size}px`,
+                                backgroundColor: item.color,
+                                opacity: opacity,
+                                transform: 'translate(-50%, -50%)',
+                                boxShadow: `0 0 ${size / 2}px ${item.color}`,
+                                filter: `blur(${style.blur}px)`,
+                                transition: 'top 0.1s linear',
+                                zIndex: 100 - parseInt(trackIdx)
+                              }}
+                            />
+                          );
+                        });
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Combined piano view */}
+                  <div className="mb-2">
+                    <div className="text-center text-xs text-gray-400 mb-1">Combined Newton Map</div>
+                    <div className="overflow-hidden" style={{ height: '140px' }}>
+                      <div className="relative h-full w-full flex justify-center">
+                        <div style={{ transform: 'scale(0.34)', transformOrigin: 'center bottom' }}>
+                          {/* Show combined activity from all tracks */}
+                          <div className="flex h-full items-end">
+                            {generateKeysForTrack(0).filter(k => !k.isBlack).map((key) => {
+                              // Check if any track has this note active
+                              let isActive = false;
+                              let maxVelocity = 127;
+                              Object.values(activeNotesByTrack).forEach(trackNotes => {
+                                if (trackNotes[key.midiNumber]) {
+                                  isActive = true;
+                                  maxVelocity = Math.max(maxVelocity, trackNotes[key.midiNumber]);
+                                }
+                              });
+                              
+                              const baseColor = newtonBaseColors[key.baseNote];
+                              const displayColor = getColorForOctave(baseColor, key.octave, maxVelocity);
+                              
+                              return (
+                                <div
+                                  key={key.note}
+                                  className={`relative border-r border-gray-700 transition-all ${
+                                    isActive ? 'brightness-150 scale-105' : ''
+                                  }`}
+                                  style={{
+                                    width: '24px',
+                                    height: '120px',
+                                    backgroundColor: displayColor,
+                                    boxShadow: isActive 
+                                      ? `0 0 20px ${displayColor}` 
+                                      : '0 4px 6px rgba(0,0,0,0.3)',
+                                    borderRadius: '0 0 4px 4px'
+                                  }}
+                                >
+                                  {key.baseNote === 'C' && (
+                                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs font-bold text-white bg-black bg-opacity-50 px-1 rounded">
+                                      {key.octave}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="absolute top-0 left-0 right-0 flex items-start">
+                            {generateKeysForTrack(0).map((key, idx) => {
+                              if (!key.isBlack) return null;
+                              
+                              let isActive = false;
+                              let maxVelocity = 127;
+                              Object.values(activeNotesByTrack).forEach(trackNotes => {
+                                if (trackNotes[key.midiNumber]) {
+                                  isActive = true;
+                                  maxVelocity = Math.max(maxVelocity, trackNotes[key.midiNumber]);
+                                }
+                              });
+                              
+                              const baseColor = newtonBaseColors[key.baseNote];
+                              const displayColor = getColorForOctave(baseColor, key.octave, maxVelocity);
+                              const whiteKeysBefore = generateKeysForTrack(0).slice(0, idx).filter(k => !k.isBlack).length;
+                              
+                              return (
+                                <div
+                                  key={key.note}
+                                  className={`absolute transition-all ${isActive ? 'brightness-150 scale-110' : ''}`}
+                                  style={{
+                                    left: `${whiteKeysBefore * 24 + 17}px`,
+                                    width: '14px',
+                                    height: '70px',
+                                    backgroundColor: displayColor,
+                                    boxShadow: isActive ? `0 0 20px ${displayColor}` : '0 4px 8px rgba(0,0,0,0.5)',
+                                    borderRadius: '0 0 3px 3px',
+                                    border: '1px solid rgba(0,0,0,0.3)'
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="text-center text-gray-400 text-xs mt-2">
+                {viewMode === 'lanes' 
+                  ? `Lanes Mode: ${numTracks} separate track(s) • Switch to Layers for blended view`
+                  : `Layers Mode: ${midiDevices.length} track(s) layered • Switch to Lanes to see individual tracks`
+                }
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<NewtonColorPiano />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synesthesia - MIDI Visualizer Collection</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background dots */
+        .bg-dots {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(100, 200, 255, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(-40px) translateX(-10px); }
+            75% { transform: translateY(-20px) translateX(5px); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 40px 20px;
+        }
+        
+        .title {
+            font-size: 72px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            letter-spacing: 8px;
+            position: relative;
+            color: transparent;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .title-wave {
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 900px;
+            cursor: pointer;
+        }
+        
+        .title-wave canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        
+        .subtitle {
+            font-size: 24px;
+            color: #aaa;
+            font-weight: 300;
+            margin-top: 10px;
+        }
+        
+        /* Navigation Grid */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .nav-card {
+            background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(131, 56, 236, 0.2));
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(58, 134, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .nav-card:hover::before {
+            opacity: 1;
+        }
+        
+        .nav-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(58, 134, 255, 0.6);
+            box-shadow: 0 10px 30px rgba(58, 134, 255, 0.3);
+        }
+        
+        .nav-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(58, 134, 255, 0.3);
+        }
+        
+        .back-btn {
+            background: rgba(58, 134, 255, 0.2);
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 20px;
+        }
+        
+        .back-btn:hover {
+            background: rgba(58, 134, 255, 0.3);
+            border-color: rgba(58, 134, 255, 0.5);
+        }
+        
+        .section-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #3a86ff;
+        }
+        
+        /* Version Cards */
+        .versions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .version-card {
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid rgba(58, 134, 255, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .version-card:hover {
+            border-color: rgba(58, 134, 255, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(58, 134, 255, 0.2);
+        }
+        
+        .version-card h4 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #3a86ff;
+        }
+        
+        .version-card p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .version-badge {
+            display: inline-block;
+            background: rgba(58, 134, 255, 0.2);
+            color: #3a86ff;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .launch-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #3a86ff, #8338ec);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .launch-btn:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(58, 134, 255, 0.4);
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            background: rgba(20, 20, 30, 0.6);
+            border-left: 4px solid #3a86ff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .info-box h4 {
+            color: #3a86ff;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .info-box p, .info-box ul {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .info-box ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .info-box li {
+            margin-bottom: 8px;
+        }
+        
+        /* Updates Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(58, 134, 255, 0.3);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding-left: 30px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -47px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: #3a86ff;
+            border-radius: 50%;
+            border: 3px solid #000;
+        }
+        
+        .timeline-date {
+            color: #3a86ff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-content {
+            background: rgba(20, 20, 30, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(58, 134, 255, 0.2);
+        }
+        
+        .timeline-content h4 {
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .timeline-content p {
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 30px;
+            border-top: 1px solid rgba(58, 134, 255, 0.2);
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 40px;
+            background: rgba(20, 20, 30, 0.8);
+            border: 2px solid rgba(58, 134, 255, 0.3);
+            border-radius: 20px;
+            margin-top: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3a86ff, #8338ec);
+            width: 0%;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background Dots -->
+    <div class="bg-dots" id="bgDots"></div>
+    
+    <div class="container">
+        <!-- Main Landing Page -->
+        <div id="landing" class="content-section active">
+            <div class="header">
+                <h1 class="title">
+                    <div class="title-wave" id="titleWave1"></div>
+                    <div class="title-wave" id="titleWave2"></div>
+                </h1>
+                <p class="subtitle">MIDI Visualizer Collection</p>
+            </div>
+            
+            <div class="nav-grid">
+                <div class="nav-card" onclick="showSection('howItWorks')">
+                    <h3>How it<br>works!</h3>
+                </div>
+                
+                <div class="nav-card" onclick="showSection('demo')">
+                    <h3>Demo</h3>
+                </div>
+                
+                <div class="nav-card" onclick="showSection('versions')">
+                    <h3>Versions</h3>
+                </div>
+                
+                <div class="nav-card" onclick="showSection('updates')">
+                    <h3>Updates</h3>
+                </div>
+                
+                <div class="nav-card" onclick="showSection('templates')">
+                    <h3>User<br>templates</h3>
+                </div>
+                
+                <div class="nav-card" onclick="showSection('resources')">
+                    <h3>Resources</h3>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">Project Status: Active Development</div>
+            </div>
+        </div>
+        
+        <!-- How It Works Section -->
+        <div id="howItWorks" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2 class="section-title">How It Works</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎹 MIDI Setup</h4>
+                <p>Synesthesia visualizes your music in real-time by connecting to MIDI data:</p>
+                <ul>
+                    <li><strong>Step 1:</strong> Open Audio MIDI Setup on your Mac</li>
+                    <li><strong>Step 2:</strong> Create IAC (Inter-Application Communication) buses for each track you want to visualize</li>
+                    <li><strong>Step 3:</strong> In your DAW (Logic Pro, Ableton, etc.), route each track's MIDI output to a different IAC bus</li>
+                    <li><strong>Step 4:</strong> Open any Synesthesia visualizer in your browser - it will automatically detect and connect to your MIDI inputs</li>
+                    <li><strong>Step 5:</strong> Play your music and watch it come to life!</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎨 Newton's Color Wheel</h4>
+                <p>Each visualizer uses Newton's color spectrum mapping, where musical notes are assigned specific colors based on their frequency:</p>
+                <ul>
+                    <li><strong>C</strong> - Violet</li>
+                    <li><strong>D</strong> - Red</li>
+                    <li><strong>E</strong> - Orange</li>
+                    <li><strong>F</strong> - Yellow</li>
+                    <li><strong>G</strong> - Green</li>
+                    <li><strong>A</strong> - Blue</li>
+                    <li><strong>B</strong> - Indigo</li>
+                </ul>
+                <p>Octaves control brightness - lower octaves (C0) are darker, higher octaves (C10) are brighter. Velocity affects size and saturation.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎛️ Customization</h4>
+                <p>Every visualizer includes extensive customization options:</p>
+                <ul>
+                    <li>Particle size and behavior</li>
+                    <li>Background styles and colors</li>
+                    <li>Visual effects (glow, trails, blur)</li>
+                    <li>Display modes (lanes vs. layers)</li>
+                    <li>Color schemes and intensity</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Demo Section -->
+        <div id="demo" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2 class="section-title">Demo</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎬 Try It Out</h4>
+                <p>Each visualizer has a built-in demo mode that you can test without MIDI setup. Simply open any version and use the on-screen piano or connect a MIDI keyboard.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>📺 Video Demonstrations</h4>
+                <p>Coming soon: Video tutorials and demonstrations of each visualizer style with different musical genres.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎵 Recommended Test Tracks</h4>
+                <ul>
+                    <li><strong>Classical:</strong> Try Bach or Debussy for complex polyphonic patterns</li>
+                    <li><strong>Electronic:</strong> Synthwave or EDM for rhythm and bass visualization</li>
+                    <li><strong>Jazz:</strong> Complex chords show beautiful color mixing</li>
+                    <li><strong>Minimal:</strong> Ambient or minimal techno for clean, meditative visuals</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Versions Section -->
+        <div id="versions" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2 class="section-title">Versions</h2>
+            </div>
+            
+            <div class="versions-grid">
+                <div class="version-card">
+                    <h4>🎨 Original Lightweight</h4>
+                    <span class="version-badge">Core</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>The foundation version with Newton's color wheel mapping, chord detection, and extensive background customization options including gradient mixer and additive color modes.</p>
+                    <a href="newton-midi-visualizer-fixed.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>🌆 Retro Synthwave</h4>
+                    <span class="version-badge">Style</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>80s aesthetic with diamond-shaped particles, neon glow effects, perspective grid floor, and classic sunset gradient. Hot pink, cyan, and electric purple dominate.</p>
+                    <a href="newton-midi-synthwave.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>🎭 Kandinsky</h4>
+                    <span class="version-badge">Style</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>Inspired by abstract expressionism with geometric shapes (circles, squares, triangles), bold primary colors, thick black borders, and Bauhaus design principles.</p>
+                    <a href="newton-midi-kandinsky.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>⚫ Minimal Monochrome</h4>
+                    <span class="version-badge">Style</span>
+                    <span class="version-badge">v1.0</span>
+                    <p>Pure black and white elegance. Simple circles with focus on form, motion, and negative space. Multiple fade styles and background options for different moods.</p>
+                    <a href="newton-midi-minimal.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+                
+                <div class="version-card">
+                    <h4>〰️ Oscilloscope</h4>
+                    <span class="version-badge">Technical</span>
+                    <span class="version-badge">v1.1</span>
+                    <p>Real-time waveform visualization. MIDI notes converted to sine waves at their actual frequencies, with dynamic horizontal scrolling and additive color mixing.</p>
+                    <a href="newton-midi-oscilloscope.html" class="launch-btn" target="_blank">Launch →</a>
+                </div>
+            </div>
+            
+            <div class="info-box" style="margin-top: 40px;">
+                <h4>📋 Version Comparison</h4>
+                <p><strong>Lanes Mode:</strong> All versions (except Oscilloscope) support lanes mode where each MIDI track gets its own horizontal lane.</p>
+                <p><strong>Layers Mode:</strong> Stack all tracks with depth effects for a unified composition view.</p>
+                <p><strong>Customization:</strong> Each version has unique settings tailored to its aesthetic.</p>
+            </div>
+        </div>
+        
+        <!-- Updates Section -->
+        <div id="updates" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2 class="section-title">Updates</h2>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🌊 Oscilloscope v1.1 - Performance Update</h4>
+                        <p>Fixed note counter display bug and significantly improved waveform dynamics. Speed range increased to 1-50, added horizontal scrolling animation for smooth wave movement across screen.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>〰️ Oscilloscope Mode Released</h4>
+                        <p>New technical visualization showing real-time waveforms. MIDI notes converted to sine waves at their actual frequencies with Newton color mapping and additive mixing.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🎨 Style Pack Release</h4>
+                        <p>Three new stylistic versions launched: Retro Synthwave (80s neon aesthetic), Kandinsky (geometric abstract art), and Minimal Monochrome (pure B&W elegance).</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🔧 Core Update - Background Opacity Fix</h4>
+                        <p>Fixed master background opacity control. Now properly applies to all background modes (gradient, solid, and additive). Enhanced color mixing with W3Schools algorithm.</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-date">November 21, 2025</div>
+                    <div class="timeline-content">
+                        <h4>🎵 Initial Release - Core Visualizer</h4>
+                        <p>First version launched with Newton color wheel mapping, chord detection, multiple background modes, and extensive customization options. Support for unlimited MIDI tracks.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box" style="margin-top: 40px;">
+                <h4>🚀 Upcoming Features</h4>
+                <ul>
+                    <li>Recording and export functionality (video/GIF)</li>
+                    <li>MIDI file playback support</li>
+                    <li>Additional visual styles (Aurora, Underwater, Fire)</li>
+                    <li>Preset management system</li>
+                    <li>Performance optimizations for 4K displays</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- User Templates Section -->
+        <div id="templates" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2 class="section-title">User Templates</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>📦 Coming Soon</h4>
+                <p>This section will feature user-created custom templates, presets, and configurations. Share your favorite settings and discover setups from the community.</p>
+            </div>
+            
+            <div class="info-box">
+                <h4>💡 How to Save Your Settings</h4>
+                <p>Currently, each visualizer's settings are stored in the browser for the session. Future updates will include:</p>
+                <ul>
+                    <li>Preset save/load functionality</li>
+                    <li>Export/import settings as JSON files</li>
+                    <li>Cloud-based preset library</li>
+                    <li>Community template sharing</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎨 Create Your Own</h4>
+                <p>Want to create a custom style? All visualizers are open source. You can modify the HTML files to create your own unique aesthetic. Share your creations with the community!</p>
+            </div>
+        </div>
+        
+        <!-- Resources Section -->
+        <div id="resources" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2 class="section-title">Resources</h2>
+            </div>
+            
+            <div class="info-box">
+                <h4>📚 Documentation</h4>
+                <ul>
+                    <li><strong>MIDI Setup Guide:</strong> Detailed instructions for configuring IAC buses on macOS</li>
+                    <li><strong>Color Theory:</strong> Understanding Newton's color wheel and frequency-to-color mapping</li>
+                    <li><strong>Customization Guide:</strong> Deep dive into all available settings and options</li>
+                    <li><strong>Technical Specs:</strong> How the visualizers process MIDI data and render graphics</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎹 Compatible DAWs</h4>
+                <ul>
+                    <li>Logic Pro (recommended)</li>
+                    <li>Ableton Live</li>
+                    <li>FL Studio</li>
+                    <li>GarageBand</li>
+                    <li>Any DAW with MIDI routing capabilities</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🔧 Browser Compatibility</h4>
+                <ul>
+                    <li><strong>Chrome/Edge:</strong> Full support, best performance</li>
+                    <li><strong>Firefox:</strong> Full support</li>
+                    <li><strong>Safari:</strong> Full support</li>
+                    <li><strong>Requirements:</strong> Web MIDI API support, Canvas 2D rendering</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>💻 System Requirements</h4>
+                <ul>
+                    <li><strong>OS:</strong> macOS (for MIDI routing), Windows (with loopMIDI), Linux</li>
+                    <li><strong>RAM:</strong> 4GB minimum, 8GB recommended</li>
+                    <li><strong>Display:</strong> Any resolution, optimized for 1920x1080 and above</li>
+                    <li><strong>GPU:</strong> Hardware acceleration recommended for best performance</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🆘 Troubleshooting</h4>
+                <ul>
+                    <li><strong>No MIDI connection:</strong> Ensure IAC buses are enabled in Audio MIDI Setup</li>
+                    <li><strong>Low frame rate:</strong> Reduce max particles or disable glow effects</li>
+                    <li><strong>Colors not accurate:</strong> Check your display's color profile</li>
+                    <li><strong>Sync issues:</strong> Adjust buffer size in your DAW's audio settings</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🔗 Useful Links</h4>
+                <ul>
+                    <li><a href="https://en.wikipedia.org/wiki/Synesthesia" target="_blank" style="color: #3a86ff;">Learn about Synesthesia</a></li>
+                    <li><a href="https://en.wikipedia.org/wiki/Newton_disc" target="_blank" style="color: #3a86ff;">Newton's Color Wheel</a></li>
+                    <li><a href="https://www.w3.org/TR/webmidi/" target="_blank" style="color: #3a86ff;">Web MIDI API Documentation</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Synesthesia MIDI Visualizer Collection • 2025</p>
+            <p>Bringing color to sound, one note at a time.</p>
+        </div>
+    </div>
+    
+    <script>
+        // Newton's color spectrum for rainbow gradient
+        const NEWTON_SPECTRUM = [
+            [148, 0, 211],    // Violet
+            [75, 0, 130],     // Indigo
+            [0, 0, 255],      // Blue
+            [0, 128, 255],    // Cyan
+            [0, 255, 0],      // Green
+            [127, 255, 0],    // Yellow-green
+            [255, 255, 0],    // Yellow
+            [255, 140, 0],    // Orange
+            [255, 0, 0],      // Red
+            [255, 0, 128]     // Red-pink
+        ];
+        
+        // Create waveform paths that spell out the text like an EKG
+        function createLetterWaveform(letter) {
+            // Define waveform patterns for each letter (high=0.9, mid=0.5, low=0.1)
+            // Based on hand-drawn sketch patterns
+            const patterns = {
+                'W': [0.5, 0.2, 0.8, 0.2, 0.8, 0.5],  // Two valleys forming W
+                'E': [0.9, 0.5, 0.5, 0.9, 0.5, 0.5, 0.9],  // Three horizontal bars
+                'L': [0.9, 0.9, 0.9, 0.2, 0.2],  // Vertical down then horizontal
+                'C': [0.8, 0.9, 0.9, 0.2, 0.2, 0.8],  // Arc shape
+                'O': [0.8, 0.9, 0.9, 0.2, 0.2, 0.2, 0.9, 0.9, 0.8],  // Circle
+                'M': [0.2, 0.9, 0.9, 0.5, 0.9, 0.9, 0.2],  // Two peaks
+                'T': [0.9, 0.9, 0.9, 0.5, 0.5, 0.5, 0.5],  // Top bar then down
+                'S': [0.8, 0.9, 0.5, 0.5, 0.2, 0.8],  // Snake shape
+                'Y': [0.9, 0.7, 0.5, 0.5, 0.5, 0.2],  // V converging down
+                'N': [0.2, 0.9, 0.9, 0.5, 0.2, 0.2],  // Diagonal up
+                'H': [0.9, 0.9, 0.5, 0.5, 0.9, 0.9],  // Two verticals with crossbar
+                'A': [0.2, 0.9, 0.9, 0.5, 0.5, 0.9, 0.9, 0.2],  // Peak with crossbar
+                'I': [0.9, 0.9, 0.5, 0.5, 0.5],  // Simple vertical
+                ' ': [0.5, 0.5, 0.5]  // Flat baseline for space
+            };
+            
+            return patterns[letter.toUpperCase()] || [0.5, 0.5];
+        }
+        
+        // Draw text as EKG/heartbeat style waveform
+        function drawWaveformText(canvasId, text) {
+            const container = document.getElementById(canvasId);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 900;
+            canvas.height = 160;
+            
+            container.appendChild(canvas);
+            
+            let phase = 0;
+            let isHovering = false;
+            let animationFrame = null;
+            
+            container.addEventListener('mouseenter', () => {
+                isHovering = true;
+                if (!animationFrame) {
+                    animate();
+                }
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                isHovering = false;
+            });
+            
+            function drawWave(animPhase) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const centerY = canvas.height / 2;
+                const amplitude = 60;  // Increased for more dramatic letter shapes
+                const letterSpacing = canvas.width / (text.length + 1);
+                
+                // Build continuous waveform path
+                const points = [];
+                let currentX = 40;  // Start padding
+                
+                for (let i = 0; i < text.length; i++) {
+                    const letter = text[i];
+                    const pattern = createLetterWaveform(letter);
+                    const segmentWidth = letterSpacing / pattern.length;
+                    
+                    // Add connecting line from previous letter
+                    if (i > 0 && points.length > 0) {
+                        const lastPoint = points[points.length - 1];
+                        const nextY = centerY - (pattern[0] - 0.5) * amplitude;
+                        const steps = 3;
+                        for (let s = 1; s <= steps; s++) {
+                            points.push({
+                                x: lastPoint.x + (currentX - lastPoint.x) * (s / steps),
+                                y: lastPoint.y + (nextY - lastPoint.y) * (s / steps)
+                            });
+                        }
+                    }
+                    
+                    for (let j = 0; j < pattern.length; j++) {
+                        const x = currentX + j * segmentWidth;
+                        const baseY = centerY - (pattern[j] - 0.5) * amplitude;
+                        
+                        // Add slight wave animation on hover
+                        const wave = isHovering ? Math.sin(x * 0.04 + animPhase) * 4 : 0;
+                        const y = baseY + wave;
+                        
+                        points.push({ x, y });
+                    }
+                    
+                    currentX += letterSpacing;
+                }
+                
+                // Draw the continuous waveform with smooth curves
+                if (points.length > 1) {
+                    ctx.lineWidth = 5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    // Draw in segments to apply rainbow gradient
+                    for (let i = 0; i < points.length - 1; i++) {
+                        const p1 = points[i];
+                        const p2 = points[i + 1];
+                        
+                        // Calculate color based on position
+                        const colorProgress = p1.x / canvas.width;
+                        const colorIndex = colorProgress * (NEWTON_SPECTRUM.length - 1);
+                        const colorIdx1 = Math.floor(colorIndex);
+                        const colorIdx2 = Math.min(colorIdx1 + 1, NEWTON_SPECTRUM.length - 1);
+                        const colorBlend = colorIndex - colorIdx1;
+                        
+                        const color1 = NEWTON_SPECTRUM[colorIdx1];
+                        const color2 = NEWTON_SPECTRUM[colorIdx2];
+                        
+                        const r = Math.round(color1[0] * (1 - colorBlend) + color2[0] * colorBlend);
+                        const g = Math.round(color1[1] * (1 - colorBlend) + color2[1] * colorBlend);
+                        const b = Math.round(color1[2] * (1 - colorBlend) + color2[2] * colorBlend);
+                        
+                        ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            function animate() {
+                if (!isHovering) {
+                    drawWave(0);
+                    animationFrame = null;
+                    return;
+                }
+                
+                drawWave(phase);
+                phase += 0.05;
+                animationFrame = requestAnimationFrame(animate);
+            }
+            
+            // Draw initial static version
+            drawWave(0);
+        }
+        
+        // Generate background dots
+        function createDots() {
+            const dotsContainer = document.getElementById('bgDots');
+            const numDots = 50;
+            
+            for (let i = 0; i < numDots; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.left = Math.random() * 100 + '%';
+                dot.style.top = Math.random() * 100 + '%';
+                dot.style.animationDelay = Math.random() * 20 + 's';
+                dot.style.animationDuration = (15 + Math.random() * 10) + 's';
+                dotsContainer.appendChild(dot);
+            }
+        }
+        
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Animate progress bar
+        function animateProgress() {
+            const progressFill = document.getElementById('progressFill');
+            setTimeout(() => {
+                progressFill.style.width = '75%';
+            }, 500);
+        }
+        
+        // Initialize
+        drawWaveformText('titleWave1', 'Welcome To');
+        drawWaveformText('titleWave2', 'Synesthesia');
+        createDots();
+        animateProgress();
+    </script>
+</body>
+</html>

@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton MIDI - Retro Synthwave</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            color: #ff00ff;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #header {
+            padding: 15px 20px;
+            background: linear-gradient(180deg, rgba(138,43,226,0.3) 0%, rgba(0,0,0,0.8) 100%);
+            border-bottom: 2px solid #ff00ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(255,0,255,0.5);
+        }
+        #title { 
+            font-size: 24px; 
+            font-weight: 900; 
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            background: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        #controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 2px solid;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px;
+        }
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px;
+        }
+        #status { 
+            background: rgba(220,38,38,0.3); 
+            color: #ff0066;
+            border-color: #ff0066;
+            box-shadow: 0 0 10px #ff0066;
+        }
+        #status.connected { 
+            background: rgba(255,0,255,0.3); 
+            color: #ff00ff;
+            border-color: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        #modeBtn { 
+            background: rgba(0,255,255,0.3); 
+            color: #00ffff;
+            border-color: #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+        }
+        #guideBtn { 
+            background: rgba(255,105,180,0.3); 
+            color: #ff69b4;
+            border-color: #ff69b4;
+            box-shadow: 0 0 10px #ff69b4;
+        }
+        #visualCanvas {
+            flex: 1;
+            display: block;
+            width: 100%;
+        }
+        #pianoContainer {
+            height: 180px;
+            background: rgba(0,0,0,0.8);
+            border-top: 2px solid #ff00ff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            box-shadow: 0 0 20px rgba(255,0,255,0.3);
+        }
+        #colorMapCanvas, #pianoCanvas {
+            display: block;
+        }
+        #info {
+            padding: 10px;
+            text-align: center;
+            font-size: 11px;
+            background: linear-gradient(0deg, rgba(138,43,226,0.3) 0%, rgba(0,0,0,0.8) 100%);
+            border-top: 2px solid #00ffff;
+            letter-spacing: 1px;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        #guide, #settings {
+            position: fixed;
+            background: rgba(10, 0, 20, 0.98);
+            border: 3px solid #ff00ff;
+            border-radius: 0;
+            padding: 25px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 0 30px rgba(255,0,255,0.8), inset 0 0 30px rgba(255,0,255,0.1);
+        }
+        #guide {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #guide.show, #settings.show { display: block; }
+        #guide h3, #settings h3 { 
+            margin-bottom: 15px; 
+            color: #ff00ff; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+        #guide p { 
+            margin-bottom: 10px; 
+            font-size: 13px; 
+            line-height: 1.6;
+            color: #00ffff;
+        }
+        #guide .close, #settings button {
+            background: rgba(255,0,102,0.3);
+            color: #ff0066;
+            border: 2px solid #ff0066;
+            border-radius: 0;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px #ff0066;
+        }
+        #guide .close { float: right; }
+        #settings {
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .setting-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,0,255,0.3);
+        }
+        .setting-group:last-child { border-bottom: none; }
+        .setting-label {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 8px;
+            color: #ff69b4;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .setting-input {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255,0,255,0.1);
+            border: 2px solid rgba(255,0,255,0.3);
+            border-radius: 0;
+            color: #00ffff;
+            font-size: 12px;
+            font-family: 'Orbitron', sans-serif;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .setting-value {
+            display: inline-block;
+            float: right;
+            font-size: 12px;
+            color: #00ffff;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <div id="title">◢ SYNTHWAVE ◣</div>
+            <div id="controls">
+                <div id="status" class="btn">● OFFLINE</div>
+                <button id="modeBtn" class="btn">LANES</button>
+                <button id="guideBtn" class="btn">GUIDE</button>
+                <button id="settingsBtn" class="btn" style="background: rgba(255,0,255,0.3); color: #ff00ff; border-color: #ff00ff; box-shadow: 0 0 10px #ff00ff;">SETTINGS</button>
+            </div>
+        </div>
+        <canvas id="visualCanvas"></canvas>
+        <div id="pianoContainer">
+            <canvas id="colorMapCanvas"></canvas>
+            <canvas id="pianoCanvas"></canvas>
+        </div>
+        <div id="info">
+            <span id="trackCount">NO SIGNAL</span> • 
+            RETRO SYNTH VISUALIZATION • 
+            80s FOREVER
+        </div>
+    </div>
+
+    <div id="guide">
+        <button class="close" onclick="document.getElementById('guide').classList.remove('show')">✕ CLOSE</button>
+        <h3>◢ SYNTHWAVE MODE ◣</h3>
+        <p><strong>AESTHETIC:</strong> This version captures the essence of 1980s synthwave culture with neon colors, grid backgrounds, and that classic sunset gradient vibe.</p>
+        <p><strong>VISUAL STYLE:</strong> Diamond-shaped particles with glowing neon trails, perspective grid floor, and classic purple-to-pink sunset gradient background.</p>
+        <p><strong>COLOR PALETTE:</strong> Hot pink (#FF00FF), cyan (#00FFFF), and electric purple dominate the visual landscape.</p>
+        <p><strong>EFFECTS:</strong> All particles have intense glow effects and leave trailing echoes for that retro-futuristic feel.</p>
+        <hr style="margin: 15px 0; border-color: #ff00ff;">
+        <p><strong>MIDI SETUP:</strong></p>
+        <p>1. Configure IAC buses in Audio MIDI Setup</p>
+        <p>2. Route tracks to different buses</p>
+        <p>3. Play and watch the synthwave magic</p>
+    </div>
+
+    <div id="settings">
+        <h3>◢ SETTINGS ◣</h3>
+        
+        <div class="setting-group">
+            <label class="setting-label">
+                Particle Size
+                <span class="setting-value" id="sizeValue">40</span>
+            </label>
+            <input type="range" id="particleSize" min="20" max="80" value="40" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Glow Intensity
+                <span class="setting-value" id="glowValue">15</span>
+            </label>
+            <input type="range" id="glowIntensity" min="5" max="30" value="15" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Trail Length
+                <span class="setting-value" id="trailValue">8</span>
+            </label>
+            <input type="range" id="trailLength" min="3" max="20" value="8" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Grid Opacity
+                <span class="setting-value" id="gridOpacityValue">30%</span>
+            </label>
+            <input type="range" id="gridOpacity" min="0" max="100" value="30" class="setting-input">
+        </div>
+
+        <button onclick="document.getElementById('settings').classList.remove('show')" style="width: 100%; padding: 10px; margin-top: 10px;">
+            ✓ APPLY
+        </button>
+    </div>
+
+    <script>
+        // Synthwave color palette
+        const SYNTHWAVE_COLORS = [
+            [255, 0, 255],    // Hot pink
+            [255, 0, 180],    // Deep pink
+            [255, 105, 180],  // Hot pink
+            [255, 20, 147],   // Deep pink
+            [255, 0, 200],    // Magenta
+            [0, 255, 255],    // Cyan
+            [0, 200, 255],    // Light blue
+            [138, 43, 226],   // Blue violet
+            [148, 0, 211],    // Dark violet
+            [255, 0, 128],    // Rose
+            [255, 64, 255],   // Pink
+            [128, 0, 255]     // Purple
+        ];
+
+        // State
+        let mode = 'lanes';
+        let devices = [];
+        let activeNotes = {};
+        let particles = {};
+        let lastFrame = 0;
+        
+        // Settings
+        let settings = {
+            particleSize: 40,
+            glowIntensity: 15,
+            trailLength: 8,
+            gridOpacity: 0.3
+        };
+
+        // Canvas
+        const vc = document.getElementById('visualCanvas');
+        const vctx = vc.getContext('2d', { alpha: false });
+        const cmc = document.getElementById('colorMapCanvas');
+        const cmctx = cmc.getContext('2d');
+        const pc = document.getElementById('pianoCanvas');
+        const pctx = pc.getContext('2d');
+
+        function resize() {
+            vc.width = vc.offsetWidth;
+            vc.height = vc.offsetHeight;
+            cmc.width = 1000;
+            cmc.height = 45;
+            pc.width = 1000;
+            pc.height = 120;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // MIDI
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(access => {
+                const inputs = Array.from(access.inputs.values());
+                devices = inputs;
+
+                if (inputs.length > 0) {
+                    document.getElementById('status').textContent = `✓ ONLINE`;
+                    document.getElementById('status').classList.add('connected');
+                    document.getElementById('trackCount').textContent = `${inputs.length} TRACK(S) ACTIVE`;
+                    
+                    inputs.forEach((input, idx) => {
+                        activeNotes[idx] = {};
+                        particles[idx] = [];
+                        input.onmidimessage = (m) => midi(m, idx);
+                    });
+                }
+            });
+        }
+
+        function midi(msg, idx) {
+            const [cmd, note, vel] = msg.data;
+            const on = cmd >= 144 && cmd <= 159 && vel > 0;
+            const off = (cmd >= 128 && cmd <= 143) || (cmd >= 144 && cmd <= 159 && vel === 0);
+
+            if (on) {
+                activeNotes[idx][note] = vel;
+                
+                const oct = Math.floor(note / 12) - 1;
+                const n = note % 12;
+                const [r, g, b] = SYNTHWAVE_COLORS[n];
+                const intensity = vel / 127;
+                
+                particles[idx].push({
+                    x: note / 127,
+                    y: 0,
+                    s: settings.particleSize + (vel / 127) * settings.particleSize * 0.5,
+                    r: r,
+                    g: g,
+                    b: b,
+                    intensity: intensity,
+                    t: 0,
+                    m: 2000,
+                    note: note,
+                    trail: []
+                });
+                
+                if (particles[idx].length > 30) particles[idx].shift();
+                
+            } else if (off) {
+                delete activeNotes[idx][note];
+            }
+        }
+
+        function drawGrid() {
+            const w = vc.width;
+            const h = vc.height;
+            
+            vctx.strokeStyle = `rgba(255, 0, 255, ${settings.gridOpacity})`;
+            vctx.lineWidth = 1;
+            
+            // Perspective grid
+            const gridLines = 20;
+            const vanishY = h * 0.3;
+            
+            // Vertical lines
+            for (let i = 0; i <= gridLines; i++) {
+                const x = (w / gridLines) * i;
+                vctx.beginPath();
+                vctx.moveTo(x, h);
+                const topX = w/2 + (x - w/2) * 0.3;
+                vctx.lineTo(topX, vanishY);
+                vctx.stroke();
+            }
+            
+            // Horizontal lines
+            for (let i = 0; i <= gridLines; i++) {
+                const y = vanishY + ((h - vanishY) / gridLines) * i;
+                const scale = (y - vanishY) / (h - vanishY);
+                vctx.beginPath();
+                const leftX = w/2 - (w/2) * 0.3 - (w * 0.2 * scale);
+                const rightX = w/2 + (w/2) * 0.3 + (w * 0.2 * scale);
+                vctx.moveTo(leftX, y);
+                vctx.lineTo(rightX, y);
+                vctx.stroke();
+            }
+        }
+
+        function drawSunsetGradient() {
+            const gradient = vctx.createLinearGradient(0, 0, 0, vc.height);
+            gradient.addColorStop(0, '#000000');
+            gradient.addColorStop(0.3, '#1a0033');
+            gradient.addColorStop(0.5, '#4a0080');
+            gradient.addColorStop(0.7, '#8b00ff');
+            gradient.addColorStop(0.85, '#ff00ff');
+            gradient.addColorStop(1, '#ff69b4');
+            
+            vctx.fillStyle = gradient;
+            vctx.fillRect(0, 0, vc.width, vc.height);
+        }
+
+        function drawDiamond(x, y, size, r, g, b, alpha, glow) {
+            // Draw glow layers
+            for (let i = glow; i > 0; i--) {
+                vctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.1 * (glow - i) / glow})`;
+                vctx.beginPath();
+                vctx.moveTo(x, y - size - i);
+                vctx.lineTo(x + size + i, y);
+                vctx.lineTo(x, y + size + i);
+                vctx.lineTo(x - size - i, y);
+                vctx.closePath();
+                vctx.fill();
+            }
+            
+            // Draw solid diamond
+            vctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            vctx.beginPath();
+            vctx.moveTo(x, y - size);
+            vctx.lineTo(x + size, y);
+            vctx.lineTo(x, y + size);
+            vctx.lineTo(x - size, y);
+            vctx.closePath();
+            vctx.fill();
+            
+            // Draw border
+            vctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            vctx.lineWidth = 2;
+            vctx.stroke();
+        }
+
+        function draw(time) {
+            const dt = time - lastFrame;
+            
+            if (dt < 33) {
+                requestAnimationFrame(draw);
+                return;
+            }
+            lastFrame = time;
+
+            // Draw background
+            drawSunsetGradient();
+            drawGrid();
+
+            if (mode === 'lanes') {
+                const n = Object.keys(particles).length || 1;
+                const h = vc.height / n;
+
+                Object.entries(particles).forEach(([idx, ps], i) => {
+                    const ly = i * h;
+                    
+                    // Lane separator
+                    vctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+                    vctx.lineWidth = 2;
+                    vctx.setLineDash([10, 5]);
+                    vctx.beginPath();
+                    vctx.moveTo(0, ly);
+                    vctx.lineTo(vc.width, ly);
+                    vctx.stroke();
+                    vctx.setLineDash([]);
+
+                    // Update and draw particles
+                    for (let j = ps.length - 1; j >= 0; j--) {
+                        const p = ps[j];
+                        p.t += dt;
+                        if (p.t >= p.m) {
+                            ps.splice(j, 1);
+                            continue;
+                        }
+                        p.y = p.t / p.m;
+                        
+                        // Update trail
+                        p.trail.push({x: p.x * vc.width, y: ly + p.y * h, alpha: 1 - p.y});
+                        if (p.trail.length > settings.trailLength) p.trail.shift();
+                        
+                        // Draw trail
+                        for (let k = 0; k < p.trail.length; k++) {
+                            const t = p.trail[k];
+                            const trailAlpha = (k / p.trail.length) * t.alpha * 0.5;
+                            const trailSize = p.s * (k / p.trail.length) * 0.5;
+                            drawDiamond(t.x, t.y, trailSize / 2, p.r, p.g, p.b, trailAlpha, settings.glowIntensity * 0.5);
+                        }
+                        
+                        // Draw main particle
+                        const a = 1 - p.y;
+                        drawDiamond(p.x * vc.width, ly + p.y * h, p.s / 2, p.r, p.g, p.b, a, settings.glowIntensity);
+                    }
+
+                    // Track label
+                    vctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+                    vctx.font = 'bold 14px Orbitron';
+                    vctx.shadowColor = '#00ffff';
+                    vctx.shadowBlur = 10;
+                    vctx.fillText(`T${parseInt(idx) + 1}`, 10, ly + 20);
+                    vctx.shadowBlur = 0;
+                });
+            } else {
+                // Layers mode
+                Object.entries(particles).forEach(([idx, ps]) => {
+                    for (let j = ps.length - 1; j >= 0; j--) {
+                        const p = ps[j];
+                        p.t += dt;
+                        if (p.t >= p.m) {
+                            ps.splice(j, 1);
+                            continue;
+                        }
+                        p.y = p.t / p.m;
+                        
+                        // Update trail
+                        p.trail.push({x: p.x * vc.width, y: p.y * vc.height, alpha: 1 - p.y});
+                        if (p.trail.length > settings.trailLength) p.trail.shift();
+                        
+                        // Draw trail
+                        for (let k = 0; k < p.trail.length; k++) {
+                            const t = p.trail[k];
+                            const trailAlpha = (k / p.trail.length) * t.alpha * 0.4;
+                            const trailSize = p.s * (k / p.trail.length) * 0.5;
+                            drawDiamond(t.x, t.y, trailSize / 2, p.r, p.g, p.b, trailAlpha, settings.glowIntensity * 0.5);
+                        }
+                        
+                        // Draw main particle
+                        const a = (1 - p.y) * Math.max(0.6, 1 - parseInt(idx) * 0.1);
+                        drawDiamond(p.x * vc.width, p.y * vc.height, p.s / 2, p.r, p.g, p.b, a, settings.glowIntensity);
+                    }
+                });
+            }
+
+            drawColorMap();
+            drawPiano();
+            requestAnimationFrame(draw);
+        }
+
+        function drawColorMap() {
+            cmctx.clearRect(0, 0, cmc.width, cmc.height);
+            const kw = cmc.width / 75;
+            const h = cmc.height;
+
+            let wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if ([1, 3, 6, 8, 10].includes(n)) continue;
+
+                    const [r, g, b] = SYNTHWAVE_COLORS[n];
+                    cmctx.fillStyle = `rgb(${r},${g},${b})`;
+                    cmctx.fillRect(wi * kw, 0, kw, h);
+                    wi++;
+                }
+            }
+
+            wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if (![1, 3, 6, 8, 10].includes(n)) { wi++; continue; }
+
+                    const [r, g, b] = SYNTHWAVE_COLORS[n];
+                    cmctx.fillStyle = `rgb(${r},${g},${b})`;
+                    cmctx.fillRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.65);
+                }
+            }
+        }
+
+        function drawPiano() {
+            pctx.clearRect(0, 0, pc.width, pc.height);
+            const kw = pc.width / 75;
+            const h = pc.height;
+
+            let wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if ([1, 3, 6, 8, 10].includes(n)) continue;
+
+                    const midi = (oct + 1) * 12 + n;
+                    let active = false, maxVel = 0;
+                    Object.values(activeNotes).forEach(notes => {
+                        if (notes[midi]) {
+                            active = true;
+                            maxVel = Math.max(maxVel, notes[midi]);
+                        }
+                    });
+
+                    if (active) {
+                        const [r, g, b] = SYNTHWAVE_COLORS[n];
+                        pctx.fillStyle = `rgb(${r},${g},${b})`;
+                        pctx.shadowColor = `rgb(${r},${g},${b})`;
+                        pctx.shadowBlur = 20;
+                    } else {
+                        pctx.fillStyle = '#1a0033';
+                        pctx.shadowBlur = 0;
+                    }
+                    
+                    pctx.fillRect(wi * kw, 0, kw - 1, h);
+                    pctx.shadowBlur = 0;
+
+                    pctx.strokeStyle = 'rgba(255, 0, 255, 0.5)';
+                    pctx.lineWidth = 1;
+                    pctx.strokeRect(wi * kw, 0, kw - 1, h);
+
+                    wi++;
+                }
+            }
+
+            wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if (![1, 3, 6, 8, 10].includes(n)) { wi++; continue; }
+
+                    const midi = (oct + 1) * 12 + n;
+                    let active = false;
+                    Object.values(activeNotes).forEach(notes => {
+                        if (notes[midi]) active = true;
+                    });
+
+                    if (active) {
+                        const [r, g, b] = SYNTHWAVE_COLORS[n];
+                        pctx.fillStyle = `rgb(${r},${g},${b})`;
+                        pctx.shadowColor = `rgb(${r},${g},${b})`;
+                        pctx.shadowBlur = 15;
+                    } else {
+                        pctx.fillStyle = '#0a0014';
+                        pctx.shadowBlur = 0;
+                    }
+                    
+                    pctx.fillRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.6);
+                    pctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        // Controls
+        document.getElementById('modeBtn').onclick = () => {
+            mode = mode === 'lanes' ? 'layers' : 'lanes';
+            document.getElementById('modeBtn').textContent = mode === 'lanes' ? 'LANES' : 'LAYERS';
+        };
+
+        document.getElementById('guideBtn').onclick = () => {
+            document.getElementById('guide').classList.add('show');
+        };
+
+        document.getElementById('settingsBtn').onclick = () => {
+            document.getElementById('settings').classList.toggle('show');
+        };
+
+        // Settings
+        document.getElementById('particleSize').oninput = (e) => {
+            settings.particleSize = parseInt(e.target.value);
+            document.getElementById('sizeValue').textContent = settings.particleSize;
+        };
+
+        document.getElementById('glowIntensity').oninput = (e) => {
+            settings.glowIntensity = parseInt(e.target.value);
+            document.getElementById('glowValue').textContent = settings.glowIntensity;
+        };
+
+        document.getElementById('trailLength').oninput = (e) => {
+            settings.trailLength = parseInt(e.target.value);
+            document.getElementById('trailValue').textContent = settings.trailLength;
+        };
+
+        document.getElementById('gridOpacity').oninput = (e) => {
+            settings.gridOpacity = parseInt(e.target.value) / 100;
+            document.getElementById('gridOpacityValue').textContent = e.target.value + '%';
+        };
+
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>

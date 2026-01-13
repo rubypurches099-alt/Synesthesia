@@ -1,0 +1,332 @@
+SYNESTHESIA LANDING PAGE - EDITING TUTORIAL
+===========================================
+
+TABLE OF CONTENTS
+-----------------
+1. Editing Text
+2. Changing Fonts
+3. Adding Custom Fonts
+4. Color Customization
+5. Layout Adjustments
+
+
+1. EDITING TEXT
+===============
+
+Main Title (Waveform Text)
+--------------------------
+Location: Near the bottom of the file (around line 1080)
+
+Find:
+    drawWaveformText('titleWave1', 'Welcome To');
+    drawWaveformText('titleWave2', 'Synesthesia');
+
+Change the text in quotes to whatever you want:
+    drawWaveformText('titleWave1', 'Your Text Here');
+    drawWaveformText('titleWave2', 'More Text');
+
+Note: Keep text relatively short for best display. Each line works best with 8-15 characters.
+
+
+Subtitle
+--------
+Location: Around line 175
+
+Find:
+    <p class="subtitle">MIDI Visualizer Collection</p>
+
+Change to:
+    <p class="subtitle">Your Subtitle Here</p>
+
+
+Hero Description
+----------------
+Location: Around line 176
+
+Find:
+    <p class="hero-description">
+        Transform your music into mesmerizing visual art. Real-time MIDI visualization 
+        with Newton's color spectrum, bringing synesthesia to life in your browser.
+    </p>
+
+Replace with your own description.
+
+
+Navigation Cards
+----------------
+Location: Around lines 190-215
+
+Find:
+    <div class="nav-card" onclick="showSection('howItWorks')">
+        <h3>How it works!</h3>
+    </div>
+
+Change the text between <h3> tags.
+
+
+Section Titles and Content
+---------------------------
+All section content is in the HTML between <div class="content-section"> tags.
+Simply find the text you want to change and edit it directly.
+
+
+2. CHANGING FONTS
+=================
+
+Using Google Fonts (Easiest Method)
+------------------------------------
+
+Step 1: Import the font
+Location: Top of <style> section (around line 8)
+
+Current:
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+Popular alternatives:
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap');
+
+Step 2: Apply the font
+Location: Around line 18
+
+Current:
+    font-family: 'Inter', sans-serif;
+
+Change to match your imported font:
+    font-family: 'Montserrat', sans-serif;
+    font-family: 'Roboto', sans-serif;
+    font-family: 'Poppins', sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Orbitron', sans-serif;
+
+
+Browse More Fonts
+-----------------
+Visit: https://fonts.google.com
+1. Select a font you like
+2. Click "Select this style" for the weights you want
+3. Copy the @import code from the sidebar
+4. Replace the import line in your CSS
+5. Update the font-family property
+
+
+3. ADDING CUSTOM FONTS
+======================
+
+Method 1: Web Fonts (CDN)
+--------------------------
+If you have a font hosted online:
+
+Add to CSS (around line 8):
+    @font-face {
+        font-family: 'YourFontName';
+        src: url('https://yourwebsite.com/fonts/yourfont.woff2') format('woff2'),
+             url('https://yourwebsite.com/fonts/yourfont.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+Then use it:
+    font-family: 'YourFontName', sans-serif;
+
+
+Method 2: Local Font Files
+---------------------------
+If you have font files (.woff, .woff2, .ttf, .otf):
+
+1. Place font files in the same folder as your HTML file
+
+2. Add to CSS (around line 8):
+    @font-face {
+        font-family: 'MyCustomFont';
+        src: url('mycustomfont.woff2') format('woff2'),
+             url('mycustomfont.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+3. For multiple weights, add multiple @font-face rules:
+    @font-face {
+        font-family: 'MyCustomFont';
+        src: url('mycustomfont-light.woff2') format('woff2');
+        font-weight: 300;
+        font-style: normal;
+    }
+    
+    @font-face {
+        font-family: 'MyCustomFont';
+        src: url('mycustomfont-bold.woff2') format('woff2');
+        font-weight: 700;
+        font-style: normal;
+    }
+
+4. Apply the font:
+    font-family: 'MyCustomFont', sans-serif;
+
+
+Method 3: Convert Fonts
+------------------------
+If you only have .ttf or .otf files, convert them to web formats:
+
+Best online converters:
+- https://transfonter.org/ (recommended - generates all formats + CSS)
+- https://convertio.co/font-converter/
+- https://www.fontsquirrel.com/tools/webfont-generator
+
+Steps:
+1. Upload your .ttf or .otf file
+2. Download the converted files (.woff, .woff2)
+3. Follow "Method 2: Local Font Files" above
+
+
+EXAMPLE: Adding a Custom Font Step-by-Step
+-------------------------------------------
+
+Let's say you have a font file called "MyAwesomeFont.ttf"
+
+Step 1: Convert it (if needed)
+- Go to https://transfonter.org/
+- Upload MyAwesomeFont.ttf
+- Check "WOFF2" and "WOFF" formats
+- Click Convert
+- Download the zip file
+
+Step 2: Extract and place files
+- You'll get: MyAwesomeFont.woff2, MyAwesomeFont.woff, and stylesheet.css
+- Place the .woff2 and .woff files in the same folder as your HTML file
+
+Step 3: Add @font-face to your HTML
+Open synesthesia-landing-v2.html and find line 8 (right after the @import for Inter)
+Add this:
+
+    @font-face {
+        font-family: 'MyAwesomeFont';
+        src: url('MyAwesomeFont.woff2') format('woff2'),
+             url('MyAwesomeFont.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+Step 4: Use your font
+Around line 18, change:
+    font-family: 'Inter', sans-serif;
+
+To:
+    font-family: 'MyAwesomeFont', sans-serif;
+
+Step 5: Test
+- Save the file
+- Refresh your browser
+- Your custom font should now be applied!
+
+
+4. COLOR CUSTOMIZATION
+======================
+
+Accent Colors
+-------------
+The main blue color (#3a86ff) appears throughout.
+To change it globally, search for "#3a86ff" and replace with your hex color.
+
+Purple accent (#8338ec) can also be changed the same way.
+
+
+Background
+----------
+Location: Around line 20
+
+Current:
+    background: #000;  /* Black background */
+
+Change to:
+    background: #1a1a2e;  /* Dark blue */
+    background: #0f0f0f;  /* Almost black */
+    background: linear-gradient(180deg, #000 0%, #1a1a2e 100%);  /* Gradient */
+
+
+Gradient Effects
+----------------
+Location: Around line 24
+
+    background: radial-gradient(ellipse at top, rgba(58, 134, 255, 0.15) 0%, transparent 50%);
+
+Adjust the rgba values and positions to change the glow effects.
+
+
+5. LAYOUT ADJUSTMENTS
+=====================
+
+Main Visual Size
+----------------
+Location: Around line 127
+
+Current:
+    width: 500px;
+    height: 500px;
+
+Change to make it larger or smaller:
+    width: 600px;
+    height: 600px;
+
+
+Navigation Card Size
+--------------------
+Location: Around line 153
+
+Current:
+    min-width: 140px;
+    padding: 20px 25px;
+
+Adjust for larger/smaller cards.
+
+
+Container Width
+---------------
+Location: Around line 28
+
+Current:
+    max-width: 1400px;
+
+Change to:
+    max-width: 1200px;  /* Narrower */
+    max-width: 1600px;  /* Wider */
+
+
+Section Spacing
+---------------
+Find padding and margin properties throughout to adjust spacing between sections.
+
+
+TIPS & TRICKS
+=============
+
+1. Always make a backup copy before making major changes
+2. Test your changes by opening the HTML file in a browser
+3. Use your browser's Developer Tools (F12) to experiment with CSS live
+4. The waveform text is generated by JavaScript - it supports these letters:
+   W E L C O M E T O S Y N H A I (and spaces)
+5. For other letters, you may need to add them to the drawWaveformLetter function
+6. Refresh your browser (Ctrl+R or Cmd+R) to see changes
+
+
+GETTING HELP
+============
+
+If something breaks:
+1. Check the browser console (F12) for error messages
+2. Make sure all quotes are properly closed
+3. Verify that font URLs are accessible
+4. Ensure @font-face rules come before font-family declarations
+
+
+Common Issues:
+- Font not loading: Check the URL and file path
+- Text not showing: Make sure color isn't same as background
+- Layout broken: Check for missing closing tags or brackets
+- Waveform text missing letters: Add them to the switch statement in drawWaveformLetter()
+
+
+Happy customizing!

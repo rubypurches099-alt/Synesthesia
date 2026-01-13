@@ -1,0 +1,180 @@
+        <!-- Versions Section -->
+        <div id="versions" class="content-section">
+            <div class="section-header">
+                <button class="back-btn" onclick="showSection('landing')">← Back</button>
+                <h2>Versions</h2>
+            </div>
+            
+            <p style="text-align: center; margin-bottom: 40px; color: #aaa;">Browse all visualizer versions organized by category. Click on category headers to expand/collapse.</p>
+            
+            <!-- CORE VERSIONS -->
+            <div class="version-category">
+                <div class="category-header" onclick="toggleCategory('core')">
+                    <h3>🎨 Core Versions</h3>
+                    <span class="category-count">2 versions</span>
+                    <span class="category-toggle">▼</span>
+                </div>
+                <div class="category-content" id="core-content">
+                    <div class="version-card-enhanced">
+                        <div class="version-image-container">
+                            <img src="placeholder-core-original.jpg" alt="Original Lightweight" class="version-image" 
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'250\'%3E%3Crect fill=\'%23222\' width=\'400\' height=\'250\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23666\' font-size=\'18\'%3EImage Preview%3C/text%3E%3C/svg%3E'">
+                            <div class="version-badges">
+                                <span class="version-badge-enhanced core">Core</span>
+                                <span class="version-badge-enhanced">v1.0</span>
+                            </div>
+                        </div>
+                        <div class="version-info">
+                            <h4>Original Lightweight</h4>
+                            <p class="version-description">The foundation version with Newton's color wheel mapping, chord detection, and extensive background customization options including gradient mixer and additive color modes.</p>
+                            <div class="version-features">
+                                <span class="feature-tag">🎨 Gradient Backgrounds</span>
+                                <span class="feature-tag">🎹 Chord Detection</span>
+                                <span class="feature-tag">🎛️ Lanes & Layers</span>
+                            </div>
+                            <div class="version-actions">
+                                <a href="newton-midi-visualizer-fixed.html" class="launch-btn-enhanced" target="_blank">Launch →</a>
+                                <button class="info-btn-enhanced" onclick="alert('More info coming soon!')">ℹ️ Info</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="version-card-enhanced">
+                        <div class="version-image-container">
+                            <img src="placeholder-oscilloscope.jpg" alt="Oscilloscope" class="version-image"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'250\'%3E%3Crect fill=\'%23222\' width=\'400\' height=\'250\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23666\' font-size=\'18\'%3EImage Preview%3C/text%3E%3C/svg%3E'">
+                            <div class="version-badges">
+                                <span class="version-badge-enhanced technical">Technical</span>
+                                <span class="version-badge-enhanced">v1.1</span>
+                            </div>
+                        </div>
+                        <div class="version-info">
+                            <h4>Oscilloscope</h4>
+                            <p class="version-description">Real-time waveform visualization. MIDI notes converted to sine waves at their actual frequencies, with dynamic horizontal scrolling and additive color mixing.</p>
+                            <div class="version-features">
+                                <span class="feature-tag">〰️ Waveform Display</span>
+                                <span class="feature-tag">🎵 Frequency Accurate</span>
+                                <span class="feature-tag">📊 Technical View</span>
+                            </div>
+                            <div class="version-actions">
+                                <a href="newton-midi-oscilloscope.html" class="launch-btn-enhanced" target="_blank">Launch →</a>
+                                <button class="info-btn-enhanced" onclick="alert('More info coming soon!')">ℹ️ Info</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- STYLE VARIATIONS -->
+            <div class="version-category">
+                <div class="category-header" onclick="toggleCategory('styles')">
+                    <h3>✨ Style Variations</h3>
+                    <span class="category-count">3 versions</span>
+                    <span class="category-toggle">▼</span>
+                </div>
+                <div class="category-content" id="styles-content">
+                    <div class="version-card-enhanced">
+                        <div class="version-image-container">
+                            <img src="placeholder-synthwave.jpg" alt="Retro Synthwave" class="version-image"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'250\'%3E%3Crect fill=\'%23222\' width=\'400\' height=\'250\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23666\' font-size=\'18\'%3EImage Preview%3C/text%3E%3C/svg%3E'">
+                            <div class="version-badges">
+                                <span class="version-badge-enhanced style">Style</span>
+                                <span class="version-badge-enhanced">v1.0</span>
+                            </div>
+                        </div>
+                        <div class="version-info">
+                            <h4>Retro Synthwave</h4>
+                            <p class="version-description">80s aesthetic with diamond-shaped particles, neon glow effects, perspective grid floor, and classic sunset gradient. Hot pink, cyan, and electric purple dominate.</p>
+                            <div class="version-features">
+                                <span class="feature-tag">🌆 80s Aesthetic</span>
+                                <span class="feature-tag">💎 Diamond Particles</span>
+                                <span class="feature-tag">🌅 Sunset Gradient</span>
+                            </div>
+                            <div class="version-actions">
+                                <a href="newton-midi-synthwave.html" class="launch-btn-enhanced" target="_blank">Launch →</a>
+                                <button class="info-btn-enhanced" onclick="alert('More info coming soon!')">ℹ️ Info</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="version-card-enhanced">
+                        <div class="version-image-container">
+                            <img src="placeholder-kandinsky.jpg" alt="Kandinsky" class="version-image"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'250\'%3E%3Crect fill=\'%23222\' width=\'400\' height=\'250\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23666\' font-size=\'18\'%3EImage Preview%3C/text%3E%3C/svg%3E'">
+                            <div class="version-badges">
+                                <span class="version-badge-enhanced style">Style</span>
+                                <span class="version-badge-enhanced">v1.0</span>
+                            </div>
+                        </div>
+                        <div class="version-info">
+                            <h4>Kandinsky</h4>
+                            <p class="version-description">Inspired by abstract expressionism with geometric shapes (circles, squares, triangles), bold primary colors, thick black borders, and Bauhaus design principles.</p>
+                            <div class="version-features">
+                                <span class="feature-tag">🎭 Abstract Art</span>
+                                <span class="feature-tag">⬛ Geometric Shapes</span>
+                                <span class="feature-tag">🎨 Bold Colors</span>
+                            </div>
+                            <div class="version-actions">
+                                <a href="newton-midi-kandinsky.html" class="launch-btn-enhanced" target="_blank">Launch →</a>
+                                <button class="info-btn-enhanced" onclick="alert('More info coming soon!')">ℹ️ Info</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="version-card-enhanced">
+                        <div class="version-image-container">
+                            <img src="placeholder-minimal.jpg" alt="Minimal Monochrome" class="version-image"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'250\'%3E%3Crect fill=\'%23222\' width=\'400\' height=\'250\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23666\' font-size=\'18\'%3EImage Preview%3C/text%3E%3C/svg%3E'">
+                            <div class="version-badges">
+                                <span class="version-badge-enhanced style">Style</span>
+                                <span class="version-badge-enhanced">v1.0</span>
+                            </div>
+                        </div>
+                        <div class="version-info">
+                            <h4>Minimal Monochrome</h4>
+                            <p class="version-description">Pure black and white elegance. Simple circles with focus on form, motion, and negative space. Multiple fade styles and background options for different moods.</p>
+                            <div class="version-features">
+                                <span class="feature-tag">⚫ B&W Only</span>
+                                <span class="feature-tag">⭕ Clean Circles</span>
+                                <span class="feature-tag">🎯 Minimal Design</span>
+                            </div>
+                            <div class="version-actions">
+                                <a href="newton-midi-minimal.html" class="launch-btn-enhanced" target="_blank">Launch →</a>
+                                <button class="info-btn-enhanced" onclick="alert('More info coming soon!')">ℹ️ Info</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- EXPERIMENTAL / CUSTOM VERSIONS -->
+            <div class="version-category">
+                <div class="category-header" onclick="toggleCategory('experimental')">
+                    <h3>🧪 Experimental & Custom</h3>
+                    <span class="category-count">Add your versions here</span>
+                    <span class="category-toggle">▼</span>
+                </div>
+                <div class="category-content" id="experimental-content">
+                    <div class="upload-prompt">
+                        <div class="upload-icon">📤</div>
+                        <h4>Add Your Custom Visualizers</h4>
+                        <p>This section is ready for your experimental and custom versions. To add a visualizer:</p>
+                        <ol style="text-align: left; max-width: 500px; margin: 20px auto;">
+                            <li>Take a screenshot of your visualizer</li>
+                            <li>Save it with a descriptive name (e.g., "aurora-v1.jpg")</li>
+                            <li>Use Edit Mode to add a new version card</li>
+                            <li>Update the image src, title, and description</li>
+                        </ol>
+                        <button class="launch-btn-enhanced" onclick="toggleEditMode()" style="margin-top: 20px;">Enable Edit Mode</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Version Comparison -->
+            <div class="info-box" style="margin-top: 40px; text-align: center;">
+                <h4>📋 Version Comparison</h4>
+                <p><strong>Lanes Mode:</strong> All versions (except Oscilloscope) support lanes mode where each MIDI track gets its own horizontal lane.</p>
+                <p><strong>Layers Mode:</strong> Stack all tracks with depth effects for a unified composition view.</p>
+                <p><strong>Customization:</strong> Each version has unique settings tailored to its aesthetic.</p>
+            </div>
+        </div>

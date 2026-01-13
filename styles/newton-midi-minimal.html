@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton MIDI - Minimal Monochrome</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #fff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            color: #000;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #header {
+            padding: 15px 25px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        #title { 
+            font-size: 18px; 
+            font-weight: 300; 
+            letter-spacing: 8px;
+            color: #000;
+            text-transform: uppercase;
+        }
+        #controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn {
+            padding: 8px 20px;
+            border: 1px solid #000;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 400;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            background: #fff;
+            color: #000;
+        }
+        .btn:hover { 
+            background: #000;
+            color: #fff;
+        }
+        #status { 
+            background: #fff;
+            color: #999;
+            border-color: #999;
+        }
+        #status.connected { 
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+        #visualCanvas {
+            flex: 1;
+            display: block;
+            width: 100%;
+        }
+        #pianoContainer {
+            height: 180px;
+            background: #fafafa;
+            border-top: 1px solid #e0e0e0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+        }
+        #colorMapCanvas, #pianoCanvas {
+            display: block;
+        }
+        #info {
+            padding: 12px;
+            text-align: center;
+            font-size: 10px;
+            background: #fff;
+            border-top: 1px solid #e0e0e0;
+            letter-spacing: 3px;
+            color: #999;
+            font-weight: 300;
+        }
+        #guide, #settings {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 0;
+            padding: 30px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        #guide {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #guide.show, #settings.show { display: block; }
+        #guide h3, #settings h3 { 
+            margin-bottom: 20px; 
+            color: #000; 
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 14px;
+            font-weight: 300;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+        #guide p { 
+            margin-bottom: 15px; 
+            font-size: 13px; 
+            line-height: 1.8;
+            color: #333;
+            font-weight: 300;
+        }
+        #guide .close, #settings button {
+            background: #fff;
+            color: #000;
+            border: 1px solid #000;
+            border-radius: 0;
+            padding: 8px 20px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 10px;
+            font-weight: 400;
+            transition: all 0.3s;
+        }
+        #guide .close:hover, #settings button:hover {
+            background: #000;
+            color: #fff;
+        }
+        #guide .close { float: right; }
+        #settings {
+            top: 80px;
+            right: 25px;
+            width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .setting-group {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .setting-group:last-child { border-bottom: none; }
+        .setting-label {
+            display: block;
+            font-size: 10px;
+            margin-bottom: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 400;
+        }
+        .setting-input {
+            width: 100%;
+            padding: 10px;
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 0;
+            color: #000;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+        }
+        .setting-value {
+            display: inline-block;
+            float: right;
+            font-size: 11px;
+            color: #000;
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <div id="title">Minimal</div>
+            <div id="controls">
+                <div id="status" class="btn">Disconnected</div>
+                <button id="modeBtn" class="btn">Lanes</button>
+                <button id="guideBtn" class="btn">Guide</button>
+                <button id="settingsBtn" class="btn">Settings</button>
+            </div>
+        </div>
+        <canvas id="visualCanvas"></canvas>
+        <div id="pianoContainer">
+            <canvas id="colorMapCanvas"></canvas>
+            <canvas id="pianoCanvas"></canvas>
+        </div>
+        <div id="info">
+            <span id="trackCount">No Connection</span> • 
+            Essence of Form • 
+            Purity of Motion
+        </div>
+    </div>
+
+    <div id="guide">
+        <button class="close" onclick="document.getElementById('guide').classList.remove('show')">Close</button>
+        <h3>Minimal Philosophy</h3>
+        <p><strong>Aesthetic:</strong> This visualization strips away all color to reveal the pure essence of musical form. In the absence of chromatic distraction, shape, size, and movement become the sole carriers of meaning.</p>
+        <p><strong>Visual Language:</strong> Each note manifests as a simple circle. Velocity determines size and opacity. Time determines position. Nothing more, nothing less.</p>
+        <p><strong>Design Principle:</strong> Following the minimalist tradition of artists like Agnes Martin and Donald Judd, every element serves a purpose. There is no decoration, only information.</p>
+        <p><strong>Experience:</strong> Watch music become architecture. Observe patterns emerge from simplicity. Find beauty in restraint.</p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+        <p><strong>Setup:</strong></p>
+        <p>Configure MIDI routing through Audio MIDI Setup. Connect your tracks. Let the music speak through form alone.</p>
+    </div>
+
+    <div id="settings">
+        <h3>Settings</h3>
+        
+        <div class="setting-group">
+            <label class="setting-label">
+                Circle Size
+                <span class="setting-value" id="sizeValue">30</span>
+            </label>
+            <input type="range" id="circleSize" min="15" max="60" value="30" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Stroke Weight
+                <span class="setting-value" id="strokeValue">1.5</span>
+            </label>
+            <input type="range" id="strokeWeight" min="0.5" max="4" step="0.5" value="1.5" class="setting-input">
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Fade Style
+                <span class="setting-value" id="fadeValue">Linear</span>
+            </label>
+            <select id="fadeStyle" class="setting-input">
+                <option value="linear" selected>Linear</option>
+                <option value="exponential">Exponential</option>
+                <option value="smooth">Smooth</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Background
+                <span class="setting-value" id="bgValue">White</span>
+            </label>
+            <select id="bgColor" class="setting-input">
+                <option value="white" selected>White</option>
+                <option value="light-gray">Light Gray</option>
+                <option value="black">Black</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <label class="setting-label">
+                Fill/Stroke
+                <span class="setting-value" id="fillValue">Both</span>
+            </label>
+            <select id="fillStroke" class="setting-input">
+                <option value="fill">Fill Only</option>
+                <option value="stroke">Stroke Only</option>
+                <option value="both" selected>Both</option>
+            </select>
+        </div>
+
+        <button onclick="document.getElementById('settings').classList.remove('show')" style="width: 100%; padding: 12px; margin-top: 15px;">
+            Apply
+        </button>
+    </div>
+
+    <script>
+        // State
+        let mode = 'lanes';
+        let devices = [];
+        let activeNotes = {};
+        let particles = {};
+        let lastFrame = 0;
+        
+        // Settings
+        let settings = {
+            circleSize: 30,
+            strokeWeight: 1.5,
+            fadeStyle: 'linear',
+            bgColor: 'white',
+            fillStroke: 'both'
+        };
+
+        // Canvas
+        const vc = document.getElementById('visualCanvas');
+        const vctx = vc.getContext('2d', { alpha: false });
+        const cmc = document.getElementById('colorMapCanvas');
+        const cmctx = cmc.getContext('2d');
+        const pc = document.getElementById('pianoCanvas');
+        const pctx = pc.getContext('2d');
+
+        function resize() {
+            vc.width = vc.offsetWidth;
+            vc.height = vc.offsetHeight;
+            cmc.width = 1000;
+            cmc.height = 45;
+            pc.width = 1000;
+            pc.height = 120;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        function getBgColor() {
+            switch(settings.bgColor) {
+                case 'white': return '#ffffff';
+                case 'light-gray': return '#f5f5f5';
+                case 'black': return '#000000';
+                default: return '#ffffff';
+            }
+        }
+
+        function getFgColor() {
+            return settings.bgColor === 'black' ? '#ffffff' : '#000000';
+        }
+
+        // MIDI
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(access => {
+                const inputs = Array.from(access.inputs.values());
+                devices = inputs;
+
+                if (inputs.length > 0) {
+                    document.getElementById('status').textContent = `Connected`;
+                    document.getElementById('status').classList.add('connected');
+                    document.getElementById('trackCount').textContent = `${inputs.length} Track${inputs.length > 1 ? 's' : ''} Active`;
+                    
+                    inputs.forEach((input, idx) => {
+                        activeNotes[idx] = {};
+                        particles[idx] = [];
+                        input.onmidimessage = (m) => midi(m, idx);
+                    });
+                }
+            });
+        }
+
+        function midi(msg, idx) {
+            const [cmd, note, vel] = msg.data;
+            const on = cmd >= 144 && cmd <= 159 && vel > 0;
+            const off = (cmd >= 128 && cmd <= 143) || (cmd >= 144 && cmd <= 159 && vel === 0);
+
+            if (on) {
+                activeNotes[idx][note] = vel;
+                
+                const intensity = vel / 127;
+                
+                particles[idx].push({
+                    x: note / 127,
+                    y: 0,
+                    s: settings.circleSize + (vel / 127) * settings.circleSize,
+                    intensity: intensity,
+                    t: 0,
+                    m: 3000,
+                    note: note
+                });
+                
+                if (particles[idx].length > 40) particles[idx].shift();
+                
+            } else if (off) {
+                delete activeNotes[idx][note];
+            }
+        }
+
+        function calculateAlpha(progress, intensity) {
+            const baseAlpha = 1 - progress;
+            
+            switch(settings.fadeStyle) {
+                case 'linear':
+                    return baseAlpha * intensity;
+                case 'exponential':
+                    return Math.pow(baseAlpha, 2) * intensity;
+                case 'smooth':
+                    // Smoothstep function
+                    const t = 1 - progress;
+                    return (t * t * (3 - 2 * t)) * intensity;
+                default:
+                    return baseAlpha * intensity;
+            }
+        }
+
+        function drawCircle(x, y, size, alpha) {
+            const fg = getFgColor();
+            
+            if (settings.fillStroke === 'fill' || settings.fillStroke === 'both') {
+                vctx.fillStyle = settings.bgColor === 'black' 
+                    ? `rgba(255, 255, 255, ${alpha * 0.6})`
+                    : `rgba(0, 0, 0, ${alpha * 0.6})`;
+                vctx.beginPath();
+                vctx.arc(x, y, size / 2, 0, Math.PI * 2);
+                vctx.fill();
+            }
+            
+            if (settings.fillStroke === 'stroke' || settings.fillStroke === 'both') {
+                vctx.strokeStyle = settings.bgColor === 'black'
+                    ? `rgba(255, 255, 255, ${alpha})`
+                    : `rgba(0, 0, 0, ${alpha})`;
+                vctx.lineWidth = settings.strokeWeight;
+                vctx.beginPath();
+                vctx.arc(x, y, size / 2, 0, Math.PI * 2);
+                vctx.stroke();
+            }
+        }
+
+        function draw(time) {
+            const dt = time - lastFrame;
+            
+            if (dt < 33) {
+                requestAnimationFrame(draw);
+                return;
+            }
+            lastFrame = time;
+
+            // Background
+            vctx.fillStyle = getBgColor();
+            vctx.fillRect(0, 0, vc.width, vc.height);
+
+            if (mode === 'lanes') {
+                const n = Object.keys(particles).length || 1;
+                const h = vc.height / n;
+
+                Object.entries(particles).forEach(([idx, ps], i) => {
+                    const ly = i * h;
+                    
+                    // Subtle lane separator
+                    vctx.strokeStyle = settings.bgColor === 'black' 
+                        ? 'rgba(255, 255, 255, 0.1)' 
+                        : 'rgba(0, 0, 0, 0.05)';
+                    vctx.lineWidth = 1;
+                    vctx.beginPath();
+                    vctx.moveTo(0, ly);
+                    vctx.lineTo(vc.width, ly);
+                    vctx.stroke();
+
+                    // Update and draw particles
+                    for (let j = ps.length - 1; j >= 0; j--) {
+                        const p = ps[j];
+                        p.t += dt;
+                        if (p.t >= p.m) {
+                            ps.splice(j, 1);
+                            continue;
+                        }
+                        p.y = p.t / p.m;
+                        
+                        const alpha = calculateAlpha(p.y, p.intensity);
+                        drawCircle(p.x * vc.width, ly + p.y * h, p.s, alpha);
+                    }
+
+                    // Minimal track label
+                    vctx.fillStyle = settings.bgColor === 'black' 
+                        ? 'rgba(255, 255, 255, 0.3)' 
+                        : 'rgba(0, 0, 0, 0.2)';
+                    vctx.font = '10px Inter';
+                    vctx.fillText(`${parseInt(idx) + 1}`, 8, ly + 15);
+                });
+            } else {
+                // Layers mode
+                Object.entries(particles).forEach(([idx, ps]) => {
+                    for (let j = ps.length - 1; j >= 0; j--) {
+                        const p = ps[j];
+                        p.t += dt;
+                        if (p.t >= p.m) {
+                            ps.splice(j, 1);
+                            continue;
+                        }
+                        p.y = p.t / p.m;
+                        
+                        const baseAlpha = calculateAlpha(p.y, p.intensity);
+                        const layerFade = Math.max(0.4, 1 - parseInt(idx) * 0.15);
+                        const alpha = baseAlpha * layerFade;
+                        
+                        drawCircle(p.x * vc.width, p.y * vc.height, p.s, alpha);
+                    }
+                });
+            }
+
+            drawColorMap();
+            drawPiano();
+            requestAnimationFrame(draw);
+        }
+
+        function drawColorMap() {
+            const bg = settings.bgColor === 'black' ? '#000' : '#fafafa';
+            cmctx.fillStyle = bg;
+            cmctx.fillRect(0, 0, cmc.width, cmc.height);
+            
+            const kw = cmc.width / 75;
+            const h = cmc.height;
+
+            // Draw gradient from light to dark across octaves
+            let wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if ([1, 3, 6, 8, 10].includes(n)) continue;
+
+                    const brightness = oct / 10; // 0 to 1
+                    const gray = settings.bgColor === 'black'
+                        ? Math.round(brightness * 255)
+                        : Math.round((1 - brightness) * 200 + 55);
+                    
+                    cmctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+                    cmctx.fillRect(wi * kw, 0, kw, h);
+                    
+                    cmctx.strokeStyle = settings.bgColor === 'black' 
+                        ? 'rgba(255,255,255,0.1)' 
+                        : 'rgba(0,0,0,0.1)';
+                    cmctx.lineWidth = 1;
+                    cmctx.strokeRect(wi * kw, 0, kw, h);
+                    
+                    wi++;
+                }
+            }
+
+            // Black keys
+            wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if (![1, 3, 6, 8, 10].includes(n)) { wi++; continue; }
+
+                    const brightness = oct / 10;
+                    const gray = settings.bgColor === 'black'
+                        ? Math.round(brightness * 200)
+                        : Math.round((1 - brightness) * 150 + 40);
+                    
+                    cmctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+                    cmctx.fillRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.65);
+                    
+                    cmctx.strokeStyle = settings.bgColor === 'black' 
+                        ? 'rgba(255,255,255,0.1)' 
+                        : 'rgba(0,0,0,0.1)';
+                    cmctx.lineWidth = 1;
+                    cmctx.strokeRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.65);
+                }
+            }
+        }
+
+        function drawPiano() {
+            const bg = settings.bgColor === 'black' ? '#000' : '#fff';
+            pctx.fillStyle = bg;
+            pctx.fillRect(0, 0, pc.width, pc.height);
+            
+            const kw = pc.width / 75;
+            const h = pc.height;
+
+            // White keys
+            let wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if ([1, 3, 6, 8, 10].includes(n)) continue;
+
+                    const midi = (oct + 1) * 12 + n;
+                    let active = false, maxVel = 0;
+                    Object.values(activeNotes).forEach(notes => {
+                        if (notes[midi]) {
+                            active = true;
+                            maxVel = Math.max(maxVel, notes[midi]);
+                        }
+                    });
+
+                    if (active) {
+                        const intensity = maxVel / 127;
+                        const gray = settings.bgColor === 'black'
+                            ? Math.round(intensity * 255)
+                            : Math.round((1 - intensity) * 200 + 55);
+                        pctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+                    } else {
+                        pctx.fillStyle = settings.bgColor === 'black' ? '#0a0a0a' : '#fafafa';
+                    }
+                    
+                    pctx.fillRect(wi * kw, 0, kw - 1, h);
+
+                    pctx.strokeStyle = settings.bgColor === 'black' 
+                        ? 'rgba(255,255,255,0.1)' 
+                        : 'rgba(0,0,0,0.1)';
+                    pctx.lineWidth = 1;
+                    pctx.strokeRect(wi * kw, 0, kw - 1, h);
+
+                    wi++;
+                }
+            }
+
+            // Black keys
+            wi = 0;
+            for (let oct = 0; oct <= 10; oct++) {
+                for (let n = 0; n < 12; n++) {
+                    if (oct === 10 && n > 0) break;
+                    if (![1, 3, 6, 8, 10].includes(n)) { wi++; continue; }
+
+                    const midi = (oct + 1) * 12 + n;
+                    let active = false, maxVel = 0;
+                    Object.values(activeNotes).forEach(notes => {
+                        if (notes[midi]) {
+                            active = true;
+                            maxVel = Math.max(maxVel, notes[midi]);
+                        }
+                    });
+
+                    if (active) {
+                        const intensity = maxVel / 127;
+                        const gray = settings.bgColor === 'black'
+                            ? Math.round(intensity * 200)
+                            : Math.round((1 - intensity) * 150 + 40);
+                        pctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+                    } else {
+                        pctx.fillStyle = settings.bgColor === 'black' ? '#000' : '#1a1a1a';
+                    }
+                    
+                    pctx.fillRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.6);
+
+                    pctx.strokeStyle = settings.bgColor === 'black' 
+                        ? 'rgba(255,255,255,0.05)' 
+                        : 'rgba(0,0,0,0.2)';
+                    pctx.lineWidth = 1;
+                    pctx.strokeRect(wi * kw - kw * 0.3, 0, kw * 0.6, h * 0.6);
+                }
+            }
+        }
+
+        // Controls
+        document.getElementById('modeBtn').onclick = () => {
+            mode = mode === 'lanes' ? 'layers' : 'lanes';
+            document.getElementById('modeBtn').textContent = mode === 'lanes' ? 'Lanes' : 'Layers';
+        };
+
+        document.getElementById('guideBtn').onclick = () => {
+            document.getElementById('guide').classList.add('show');
+        };
+
+        document.getElementById('settingsBtn').onclick = () => {
+            document.getElementById('settings').classList.toggle('show');
+        };
+
+        // Settings
+        document.getElementById('circleSize').oninput = (e) => {
+            settings.circleSize = parseInt(e.target.value);
+            document.getElementById('sizeValue').textContent = settings.circleSize;
+        };
+
+        document.getElementById('strokeWeight').oninput = (e) => {
+            settings.strokeWeight = parseFloat(e.target.value);
+            document.getElementById('strokeValue').textContent = settings.strokeWeight;
+        };
+
+        document.getElementById('fadeStyle').onchange = (e) => {
+            settings.fadeStyle = e.target.value;
+            document.getElementById('fadeValue').textContent = 
+                e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1);
+        };
+
+        document.getElementById('bgColor').onchange = (e) => {
+            settings.bgColor = e.target.value;
+            const labels = {
+                'white': 'White',
+                'light-gray': 'Light Gray',
+                'black': 'Black'
+            };
+            document.getElementById('bgValue').textContent = labels[e.target.value];
+            
+            // Update body background
+            document.body.style.background = getBgColor();
+        };
+
+        document.getElementById('fillStroke').onchange = (e) => {
+            settings.fillStroke = e.target.value;
+            const labels = {
+                'fill': 'Fill Only',
+                'stroke': 'Stroke Only',
+                'both': 'Both'
+            };
+            document.getElementById('fillValue').textContent = labels[e.target.value];
+        };
+
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
